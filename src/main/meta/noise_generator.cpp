@@ -87,6 +87,15 @@ namespace lsp
 
         static const int noise_generator_classes[] = { C_DELAY, -1 };
 
+        const meta::bundle_t noise_generator_bundle =
+        {
+            "noise_generator",
+            "Noise Generator",
+            B_UTILITIES,
+            "", // TODO: provide ID of the video on YouTube
+            "" // TODO: write plugin description, should be the same to the english version in 'bundles.json'
+        };
+
         const plugin_t noise_generator_mono =
         {
             "Pluginschablone Mono",
@@ -96,7 +105,7 @@ namespace lsp
             "noise_generator_mono",
             LSP_LV2_URI("noise_generator_mono"),
             LSP_LV2UI_URI("noise_generator_mono"),
-            "----",         // TODO: fill valid VST2 ID (4 lower-case letters/digits)
+            "----",         // TODO: fill valid VST2 ID (4 letters/digits)
             0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
             LSP_LADSPA_URI("noise_generator_mono"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
@@ -105,7 +114,8 @@ namespace lsp
             noise_generator_mono_ports,
             "template/plugin.xml",
             NULL,
-            mono_plugin_port_groups
+            mono_plugin_port_groups,
+            &noise_generator_bundle
         };
 
         const plugin_t noise_generator_stereo =
@@ -126,7 +136,8 @@ namespace lsp
             noise_generator_stereo_ports,
             "template/plugin.xml",
             NULL,
-            stereo_plugin_port_groups
+            stereo_plugin_port_groups,
+            &noise_generator_bundle
         };
     } /* namespace meta */
 } /* namespace lsp */
