@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2022 Stefano Tronci <stefano.tronci@protonmail.com>
  *
- * This file is part of lsp-plugins-noise-generator
- * Created on: 25 нояб. 2020 г.
+ * This file is part of lsp-plugins
+ * Created on: 27 Feb 2022
  *
- * lsp-plugins-noise-generator is free software: you can redistribute it and/or modify
+ * lsp-plugins is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * lsp-plugins-noise-generator is distributed in the hope that it will be useful,
+ * lsp-plugins is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lsp-plugins-noise-generator. If not, see <https://www.gnu.org/licenses/>.
+ * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <lsp-plug.in/plug-fw/ui.h>
@@ -30,12 +30,11 @@ namespace lsp
         // Plugin UI factory
         static const meta::plugin_t *plugin_uis[] =
         {
-            &meta::noise_generator_mono,
-            &meta::noise_generator_stereo
+            &meta::noise_generator_x1,
+            &meta::noise_generator_x2,
+			&meta::noise_generator_x4,
         };
 
-        static ui::Factory factory(plugin_uis, 2);
+        static ui::Factory factory(plugin_uis, 3);
     }
 }
-
-

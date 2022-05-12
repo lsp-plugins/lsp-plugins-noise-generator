@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2022 Stefano Tronci <stefano.tronci@protonmail.com>
  *
- * This file is part of lsp-plugins-noise-generator
- * Created on: 25 нояб. 2020 г.
+ * This file is part of lsp-plugins
+ * Created on: 27 Feb 2022
  *
- * lsp-plugins-noise-generator is free software: you can redistribute it and/or modify
+ * lsp-plugins is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * lsp-plugins-noise-generator is distributed in the hope that it will be useful,
+ * lsp-plugins is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lsp-plugins-noise-generator. If not, see <https://www.gnu.org/licenses/>.
+ * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <lsp-plug.in/plug-fw/meta/ports.h>
@@ -42,50 +42,160 @@ namespace lsp
         // Plugin metadata
 
         // NOTE: Port identifiers should not be longer than 7 characters as it will overflow VST2 parameter name buffers
-        static const port_t noise_generator_mono_ports[] =
+
+        static const port_item_t noise_lcg_dist[] =
         {
-            // Input and output audio ports
-            PORTS_MONO_PLUGIN,
+            {"Uniform",        					"noisegenerator.lcg.uniform"},
+            {"Exponential",						"noisegenerator.lcg.exponential"},
+            {"Triangular",     					"noisegenerator.lcg.triangular"},
+            {"Gaussian",       					"noisegenerator.lcg.gaussian"},
+            {NULL,          					NULL}
+        };
 
-            // Input controls
-            BYPASS,
-            INT_CONTROL("d_in", "Delay in samples", U_SAMPLES, noise_generator::SAMPLES),
-            DRY_GAIN(0.0f),
-            WET_GAIN(1.0f),
-            OUT_GAIN,
+        static const port_item_t noise_velvet_type[] =
+        {
+            {"OVN",        						"noisegenerator.velvet.ovn"},
+            {"OVNA",							"noisegenerator.velvet.ovna"},
+            {"ARN",     						"noisegenerator.velvet.arn"},
+            {"TRN",       						"noisegenerator.velvet.trn"},
+            {NULL,          					NULL}
+        };
 
-            // Output controls
-            METER_MINMAX("d_out", "Delay time in milliseconds", U_MSEC, 0.0f, noise_generator::DELAY_OUT_MAX_TIME),
-            METER_GAIN("min", "Input gain", GAIN_AMP_P_48_DB),
-            METER_GAIN("mout", "Output gain", GAIN_AMP_P_48_DB),
+        static const port_item_t noise_type[] =
+        {
+            {"MLS",        						"noisegenerator.type.mls"},
+            {"LCG",								"noisegenerator.type.lcg"},
+            {"VELVET",     						"noisegenerator.type.velvet"},
+            {NULL,          					NULL}
+        };
+
+        static const port_item_t noise_color[] =
+        {
+            {"White",        					"noisegenerator.color.white"},
+            {"Pink",							"noisegenerator.color.pink"},
+            {"Red",     						"noisegenerator.color.red"},
+            {"Blue",       						"noisegenerator.color.blue"},
+			{"Violet",       					"noisegenerator.color.violet"},
+			{"Arbitrary (Neper per Neper)",		"noisegenerator.color.npn"},
+			{"Arbitrary (dB per Octave)",   	"noisegenerator.color.dbo"},
+			{"Arbitrary (dB per Decade)",    	"noisegenerator.color.dbd"},
+            {NULL,          					NULL}
+        };
+
+        static const port_item_t noise_mode[] =
+        {
+            {"Overwrite",        				"noisegenerator.mode.over"},
+            {"Add",								"noisegenerator.mode.add"},
+            {"Multiply",     					"noisegenerator.mode.mult"},
+            {NULL,          					NULL}
+        };
+
+        static const port_item_t ng_channels_x2[] =
+        {
+            {"1",           NULL },
+            {"2",           NULL },
+            {NULL,          NULL}
+        };
+
+        static const port_item_t ng_channels_x4[] =
+        {
+            {"1",           NULL },
+            {"2",           NULL },
+            {"3",           NULL },
+            {"4",           NULL },
+            {NULL,          NULL}
+        };
+
+		#define CHANNEL_SELECTOR(ng_channels) \
+			COMBO("ng_cs", "Noise Generator Channel Selector", 0, ng_channels)
+
+		#define CHANNEL_AUDIO_PORTS(id, label) \
+			AUDIO_INPUT("in" id, "Input" label), \
+			AUDIO_OUTPUT("out" id, "Output" label)
+
+		#define CHANNEL_SWITCHES(id, label) \
+			SWITCH("glsw" id, "Global Switch" label, 0.0f), \
+			SWITCH("chsl" id, "Solo Switch" label, 0.0f), \
+			SWITCH("chmt" id, "Mute Switch" label, 0.0f)
+
+		#define LCG_CONTROLS(id, label) \
+			COMBO("lcgd" id, "LCG Distribution" label, noise_generator::NOISE_LCG_DFL, noise_lcg_dist)
+
+		#define VELVET_CONTROLS(id, label) \
+			COMBO("velt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
+			LOG_CONTROL("velw" id, "Velvet Window" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
+			LOG_CONTROL("veld" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
+			SWITCH("velcs", "Velvet Crushing Switch", 0.0f), \
+			CONTROL("velc" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
+
+		#define COLOR_CONTROLS(id, label) \
+			COMBO("cols" id, "Color Selector" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
+			CONTROL("csnpn" id, "Color Slope NPN" label, U_NONE, noise_generator::NOISE_COLOR_SLOPE_NPN), \
+			CONTROL("csdbo" id, "Color Slope DBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
+			CONTROL("csdbd" id, "Color Slope DBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
+
+		#define NOISE_CONTROLS(id, label) \
+			COMBO("nst" id, "Noise Type" label, noise_generator::NOISE_TYPE_DFL, noise_type), \
+			COMBO("nsm" id, "Noise Mode" label, noise_generator::NOISE_MODE_DFL, noise_mode), \
+			AMP_GAIN10("nsa", "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
+			CONTROL("nso" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
+			SWITCH("inas", "Make Inaudible Switch", 0.0f)
+
+		#define CHANNEL_CONTROLS(id, label) \
+			LCG_CONTROLS(id, label), \
+			VELVET_CONTROLS(id, label), \
+			COLOR_CONTROLS(id, label), \
+			NOISE_CONTROLS(id, label)
+
+    	static const port_t noise_generator_x1_ports[] =
+        {
+        	CHANNEL_AUDIO_PORTS("_1", " 1"),
+			CHANNEL_CONTROLS("_1", " 1"),
 
             PORTS_END
         };
 
-        // NOTE: Port identifiers should not be longer than 7 characters as it will overflow VST2 parameter name buffers
-        static const port_t noise_generator_stereo_ports[] =
+    	static const port_t noise_generator_x2_ports[] =
         {
-            // Input and output audio ports
-            PORTS_STEREO_PLUGIN,
+        	CHANNEL_AUDIO_PORTS("_1", " 1"),
+			CHANNEL_AUDIO_PORTS("_2", " 2"),
 
-            // Input controls
-            BYPASS,
-            INT_CONTROL("d_in", "Delay in samples", U_SAMPLES, noise_generator::SAMPLES),
-            DRY_GAIN(0.0f),
-            WET_GAIN(1.0f),
-            OUT_GAIN,
+            CHANNEL_SELECTOR(ng_channels_x2),
 
-            // Output controls
-            METER_MINMAX("d_out", "Delay time in milliseconds", U_MSEC, 0.0f, noise_generator::DELAY_OUT_MAX_TIME),
-            METER_GAIN("min_l", "Input gain left",  GAIN_AMP_P_48_DB),
-            METER_GAIN("mout_l", "Output gain left",  GAIN_AMP_P_48_DB),
-            METER_GAIN("min_r", "Input gain right",  GAIN_AMP_P_48_DB),
-            METER_GAIN("mout_r", "Output gain right", GAIN_AMP_P_48_DB),
+            CHANNEL_CONTROLS("", " Global"),
+            CHANNEL_CONTROLS("_1", " 1"),
+            CHANNEL_CONTROLS("_2", " 2"),
+
+            CHANNEL_SWITCHES("_1", " 1"),
+            CHANNEL_SWITCHES("_2", " 2"),
 
             PORTS_END
         };
 
-        static const int noise_generator_classes[] = { C_DELAY, -1 };
+    	static const port_t noise_generator_x4_ports[] =
+        {
+        	CHANNEL_AUDIO_PORTS("_1", " 1"),
+			CHANNEL_AUDIO_PORTS("_2", " 2"),
+        	CHANNEL_AUDIO_PORTS("_3", " 3"),
+			CHANNEL_AUDIO_PORTS("_4", " 4"),
+
+            CHANNEL_SELECTOR(ng_channels_x4),
+
+            CHANNEL_CONTROLS("", " Global"),
+            CHANNEL_CONTROLS("_1", " 1"),
+            CHANNEL_CONTROLS("_2", " 2"),
+            CHANNEL_CONTROLS("_3", " 3"),
+            CHANNEL_CONTROLS("_4", " 4"),
+
+            CHANNEL_SWITCHES("_1", " 1"),
+            CHANNEL_SWITCHES("_2", " 2"),
+			CHANNEL_SWITCHES("_3", " 3"),
+			CHANNEL_SWITCHES("_4", " 4"),
+
+            PORTS_END
+        };
+
+        static const int noise_generator_classes[] = { C_UTILITY, -1};
 
         const meta::bundle_t noise_generator_bundle =
         {
@@ -96,51 +206,71 @@ namespace lsp
             "" // TODO: write plugin description, should be the same to the english version in 'bundles.json'
         };
 
-        const plugin_t noise_generator_mono =
+        const plugin_t noise_generator_x1 =
         {
-            "Pluginschablone Mono",
-            "Plugin Template Mono",
-            "PS1M",
-            &developers::v_sadovnikov,
-            "noise_generator_mono",
-            LSP_LV2_URI("noise_generator_mono"),
-            LSP_LV2UI_URI("noise_generator_mono"),
+            "Noise Generator x1",
+            "Noise Generator x1",
+            "NG1",
+            &developers::s_tronci,
+            "noise_generator_x1",
+            LSP_LV2_URI("noise_generator_x1"),
+            LSP_LV2UI_URI("noise_generator_x1"),
             "----",         // TODO: fill valid VST2 ID (4 letters/digits)
             0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
-            LSP_LADSPA_URI("noise_generator_mono"),
+            LSP_LADSPA_URI("noise_generator_x1"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
             noise_generator_classes,
             E_DUMP_STATE,
-            noise_generator_mono_ports,
+            noise_generator_x1_ports,
             "template/plugin.xml",
             NULL,
-            mono_plugin_port_groups,
+			NULL,
             &noise_generator_bundle
         };
 
-        const plugin_t noise_generator_stereo =
+        const plugin_t noise_generator_x2 =
         {
-            "Pluginschablone Stereo",
-            "Plugin Template Stereo",
-            "PS1S",
-            &developers::v_sadovnikov,
-            "noise_generator_stereo",
-            LSP_LV2_URI("noise_generator_stereo"),
-            LSP_LV2UI_URI("noise_generator_stereo"),
-            "----",         // TODO: fill valid VST2 ID (4 lower-case letters/digits)
-            0,              // TODO: fill valid LADSPA identifier (positive ecimal integer)
-            LSP_LADSPA_URI("noise_generator_stereo"),
+            "Noise Generator x2",
+            "Noise Generator x2",
+            "NG2",
+            &developers::s_tronci,
+            "noise_generator_x2",
+            LSP_LV2_URI("noise_generator_x2"),
+            LSP_LV2UI_URI("noise_generator_x2"),
+            "----",         // TODO: fill valid VST2 ID (4 letters/digits)
+            0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            LSP_LADSPA_URI("noise_generator_x2"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
             noise_generator_classes,
             E_DUMP_STATE,
-            noise_generator_stereo_ports,
+            noise_generator_x2_ports,
             "template/plugin.xml",
             NULL,
-            stereo_plugin_port_groups,
+			NULL,
             &noise_generator_bundle
         };
+
+        const plugin_t noise_generator_x4 =
+        {
+            "Noise Generator x4",
+            "Noise Generator x4",
+            "NG4",
+            &developers::s_tronci,
+            "noise_generator_x4",
+            LSP_LV2_URI("noise_generator_x4"),
+            LSP_LV2UI_URI("noise_generator_x4"),
+            "----",         // TODO: fill valid VST2 ID (4 letters/digits)
+            0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            LSP_LADSPA_URI("noise_generator_x4"),
+            LSP_PLUGINS_NOISE_GENERATOR_VERSION,
+            noise_generator_classes,
+            E_DUMP_STATE,
+            noise_generator_x4_ports,
+            "template/plugin.xml",
+            NULL,
+			NULL,
+            &noise_generator_bundle
+        };
+
     } /* namespace meta */
 } /* namespace lsp */
-
-
-

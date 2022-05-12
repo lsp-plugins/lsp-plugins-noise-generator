@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2022 Stefano Tronci <stefano.tronci@protonmail.com>
  *
- * This file is part of lsp-plugins-noise-generator
- * Created on: 25 нояб. 2020 г.
+ * This file is part of lsp-plugins
+ * Created on: 27 Feb 2022
  *
- * lsp-plugins-noise-generator is free software: you can redistribute it and/or modify
+ * lsp-plugins is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * lsp-plugins-noise-generator is distributed in the hope that it will be useful,
+ * lsp-plugins is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lsp-plugins-noise-generator. If not, see <https://www.gnu.org/licenses/>.
+ * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef PRIVATE_META_NOISE_GENERATOR_H_
@@ -31,24 +31,103 @@ namespace lsp
     // Plugin metadata
     namespace meta
     {
-        typedef struct noise_generator
+        typedef struct noise_generator_metadata
         {
-            static const float  SAMPLES_MIN         = 0.0f;
-            static const float  SAMPLES_MAX         = 10000.0f;
-            static const float  SAMPLES_DFL         = 0.0f;
-            static const float  SAMPLES_STEP        = 1.0f;
+        	enum lcg_dist_selector_t
+			{
+        		NOISE_LCG_UNIFORM,
+				NOISE_LCG_EXPONENTIAL,
+				NOISE_LCG_TRIANGULAR,
+				NOISE_LCG_GAUSSIAN,
 
-            static const float  TIME_MIN            = 0.0f;
-            static const float  TIME_MAX            = 1000.0f;
-            static const float  TIME_DFL            = 0.0f;
-            static const float  TIME_STEP           = 0.01f;
+				NOISE_LCG_DFL = NOISE_LCG_UNIFORM
+			};
 
-            static const float  DELAY_OUT_MAX_TIME  = 10.0f / MAX_SAMPLE_RATE;
+        	enum velvet_type_selector_t
+			{
+        		NOISE_VELVET_OVN,
+				NOISE_VELVET_OVNA,
+				NOISE_VELVET_ARN,
+				NOISE_VELVET_TRN,
+
+				NOISE_VELVET_DFL = NOISE_VELVET_OVN
+			};
+
+            static const float  VELVET_WINDOW_DURATION_MIN	= 1.0e-3f;
+            static const float  VELVET_WINDOW_DURATION_MAX  = 10.0f;
+            static const float  VELVET_WINDOW_DURATION_DFL 	= 1.0f;
+            static const float  VELVET_WINDOW_DURATION_STEP	= 1.0e-3f;
+
+            static const float  VELVET_ARN_DELTA_MIN		= 0.0f;
+            static const float  VELVET_ARN_DELTA_MAX  		= 1.0f;
+            static const float  VELVET_ARN_DELTA_DFL 		= 0.5f;
+            static const float  VELVET_ARN_DELTA_STEP		= 1.0e-3f;
+
+            static const float  VELVET_CRUSH_PROB_MIN		= 0.0f;
+            static const float  VELVET_CRUSH_PROB_MAX  		= 100.0f;
+            static const float  VELVET_CRUSH_PROB_DFL 		= 50.0f;
+            static const float  VELVET_CRUSH_PROB_STEP		= 1.0e-2f;
+
+        	enum noise_type_selector_t
+			{
+        		NOISE_TYPE_MLS,
+				NOISE_TYPE_LCG,
+				NOISE_TYPE_VELVET,
+
+				NOISE_TYPE_DFL = NOISE_TYPE_LCG
+			};
+
+        	enum noise_color_selector_t
+			{
+        		NOISE_COLOR_WHITE,
+				NOISE_COLOR_PINK,
+				NOISE_COLOR_RED,
+				NOISE_COLOR_BLUE,
+				NOISE_COLOR_VIOLET,
+				NOISE_COLOR_ARBITRARY_NPN,
+				NOISE_COLOR_ARBITRARY_DBO,
+				NOISE_COLOR_ARBITRARY_DBD,
+
+				NOISE_COLOR_DFL = NOISE_COLOR_WHITE
+			};
+
+            static const float  NOISE_COLOR_SLOPE_NPN_MIN	= -3.0f;
+            static const float  NOISE_COLOR_SLOPE_NPN_MAX	= 3.0f;
+            static const float  NOISE_COLOR_SLOPE_NPN_DFL 	= -0.5f;  // Pink
+            static const float  NOISE_COLOR_SLOPE_NPN_STEP	= 1.0e-3f;
+
+            static const float  NOISE_COLOR_SLOPE_DBO_MIN	= -18.0f;
+            static const float  NOISE_COLOR_SLOPE_DBO_MAX	= 18.0f;
+            static const float  NOISE_COLOR_SLOPE_DBO_DFL 	= -3.01f;  // Pink
+            static const float  NOISE_COLOR_SLOPE_DBO_STEP	= 0.1f;
+
+            static const float  NOISE_COLOR_SLOPE_DBD_MIN	= -60.0f;
+            static const float  NOISE_COLOR_SLOPE_DBD_MAX	= 60.0f;
+            static const float  NOISE_COLOR_SLOPE_DBD_DFL 	= -10.0f;  // Pink
+            static const float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
+
+            static const float  NOISE_AMPLITUDE_DFL			= 1.0f;
+
+            static const float  NOISE_OFFSET_MIN			= -100.0f;
+            static const float  NOISE_OFFSET_MAX  			= 100.0f;
+            static const float  NOISE_OFFSET_DFL 			= 0.0f;
+            static const float  NOISE_OFFSET_STEP			= 1.0e-3f;
+
+        	enum noise_mode_selector_t
+			{
+        		NOISE_MODE_OVERWRITE,
+				NOISE_MODE_ADD,
+				NOISE_MODE_MULT,
+
+				NOISE_MODE_DFL = NOISE_MODE_OVERWRITE
+			};
+
         } noise_generator;
 
         // Plugin type metadata
-        extern const plugin_t noise_generator_mono;
-        extern const plugin_t noise_generator_stereo;
+        extern const plugin_t noise_generator_x1;
+        extern const plugin_t noise_generator_x2;
+        extern const plugin_t noise_generator_x4;
     }
 }
 
