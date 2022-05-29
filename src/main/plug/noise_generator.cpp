@@ -29,10 +29,11 @@
 #include <private/plugins/noise_generator.h>
 
 /* The size of temporary buffer for audio processing */
-#define BUFFER_SIZE         0x1000U
-#define INA_FILTER_ORD 		32
-#define INA_FILTER_CUTOFF 	20e3
-#define COLOR_FILTER_ORDER  32
+#define BUFFER_SIZE                 0x1000U
+#define INA_FILTER_ORD 		        64
+#define INA_FILTER_CUTOFF	        22050.0f
+#define INA_ATTENUATION             0.5f // We attenuate the noise before filtering to make it inaudible. This to prevent sharp transients from still being audible.
+#define COLOR_FILTER_ORDER          32
 
 #define TRACE_PORT(p)       lsp_trace("  port id=%s", (p)->metadata()->id);
 
@@ -284,6 +285,11 @@ namespace lsp
                 c->sNoiseGenerator.set_velvet_crushing_probability(c->fVelvetCrushP);
             }
 
+            // If the noise has to be inaudible we are best setting it to white, or excessive high frequency boost will make it audible.
+            // Conversely, excessive low frequency attenuation will make it non-existent.
+            if (c->sChUpd.bInaudible)
+                c->sNoiseGenerator.set_noise_color(dspu::NG_COLOR_WHITE);
+
             if (c->sChUpd.nUpdate & UPD_COLOR)
             {
                 c->enColor = get_color(c->sChUpd.sStateStage.nPV_pColorSel);
@@ -341,6 +347,7 @@ namespace lsp
             {
                 // No conversion needed
                 c->fOffset = c->sChUpd.sStateStage.fPV_pOffset;
+                // Note that all high pass filtering will remove this offset. This is desired (or the colour of the noise is wrong).
                 c->sNoiseGenerator.set_offset(c->fOffset);
             }
 
@@ -388,8 +395,8 @@ namespace lsp
 
                 // We also set the inaudible noise filter main properties. These are not user configurable.
                 c->sAudibleStop.set_order(INA_FILTER_ORD);
-                c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
-                c->sAudibleStop.set_filter_type(dspu::BW_FLT_TYPE_LOWPASS);
+                c->sAudibleStop.set_filter_type(dspu::BW_FLT_TYPE_HIGHPASS);
+                c->sAudibleStop.update_settings();
 
                 // Same with colour
                 c->sNoiseGenerator.set_coloring_order(COLOR_FILTER_ORDER);
@@ -415,8 +422,6 @@ namespace lsp
                 c->pIn                  = NULL;
                 c->pOut                 = NULL;
 
-                c->pGlSw                = NULL;
-                c->pSlSw                = NULL;
                 c->pLCGdist             = NULL;
                 c->pVelvetType 			= NULL;
 				c->pVelvetWin			= NULL;
@@ -432,6 +437,12 @@ namespace lsp
 				c->pAmplitude			= NULL;
 				c->pOffset				= NULL;
 				c->pInaSw				= NULL;
+				c->pGlSw                = NULL;
+				c->pSlSw                = NULL;
+				c->pMtSw                = NULL;
+
+				// Initialise state stage
+				init_state_stage(c);
             }
 
             // Bind ports
@@ -582,8 +593,16 @@ namespace lsp
             // Update sample rate for the bypass processors
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c    = &vChannels[i];
+                channel_t *c = &vChannels[i];
+
+                if (0.5f * sr < INA_FILTER_CUTOFF)
+                    c->sChUpd.bForceAudible = true;
+                else
+                    c->sChUpd.bForceAudible = false;
+
                 c->sAudibleStop.set_sample_rate(sr);
+                c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
+                c->sAudibleStop.update_settings();
             }
         }
 
@@ -716,7 +735,19 @@ namespace lsp
                 	c->sChUpd.nUpdate |= UPD_NOISE_OFFSET;
                 }
 
-                c->sChUpd.bInaudible = (c->sChUpd.bUseGlobal) ? pInaSw->value() >= 0.5f : c->pInaSw->value() >= 0.5f;
+                if (c->sChUpd.bForceAudible)
+                    c->sChUpd.bInaudible = false;
+                else
+                {
+                    bool ina = (c->sChUpd.bUseGlobal) ? pInaSw->value() >= 0.5f : c->pInaSw->value() >= 0.5f;
+                    // If inaudible changed we want to ensure the colour, that while inaudible was forced white, gets reset to user specifications.
+                    if (ina != c->sChUpd.bInaudible)
+                    {
+                        c->sChUpd.nUpdate |= UPD_COLOR;
+                        c->sChUpd.nUpdate |= UPD_COLOR_SLOPE;
+                    }
+                    c->sChUpd.bInaudible = ina;
+                }
         	}
         }
 
@@ -733,6 +764,8 @@ namespace lsp
                 if ((in == NULL) || (out == NULL))
                     continue;
 
+                commit_staged_state_change(c);
+
                 if (!c->sChUpd.bActive)
                 {
                     dsp::fill_zero(out, samples);
@@ -745,6 +778,7 @@ namespace lsp
                     {
                         size_t to_do = (samples > BUFFER_SIZE) ? BUFFER_SIZE : samples;
                         c->sNoiseGenerator.process_overwrite(vBuffer, to_do);
+                        dsp::mul_k2(vBuffer, INA_ATTENUATION, to_do);
 
                         switch (c->enMode)
                         {
@@ -756,17 +790,23 @@ namespace lsp
 
                             case CH_MODE_ADD:
                             {
+                                dsp::copy(out, in, to_do);
                                 c->sAudibleStop.process_add(out, vBuffer, to_do);
                             }
                             break;
 
                             case CH_MODE_MULT:
                             {
+                                dsp::copy(out, in, to_do);
                                 c->sAudibleStop.process_mul(out, vBuffer, to_do);
                             }
                             break;
                         }
 
+//                        // Sum the offset
+//                        dsp::add_k2(out, c->fOffset, to_do);
+
+                        in      += to_do;
                         out     += to_do;
                         samples -= to_do;
                     }
@@ -793,6 +833,9 @@ namespace lsp
                         }
                         break;
                     }
+
+//                    // Sum the offset
+//                    dsp::add_k2(out, c->fOffset, samples);
                 }
             }
         }

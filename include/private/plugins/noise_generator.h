@@ -41,7 +41,7 @@ namespace lsp
                 noise_generator (const noise_generator &);
 
             protected:
-                enum cb_update_t
+                enum ch_update_t
                 {
                 	UPD_LCG_DIST 			= 1 << 0,
 
@@ -85,14 +85,15 @@ namespace lsp
                 	float 	fPV_pOffset;
 				} ch_state_stage_t;
 
-				typedef struct ch_update_t
+				typedef struct ch_updinfo_t
 				{
 					size_t 				nUpdate;
 					ch_state_stage_t 	sStateStage;
 					bool 				bUseGlobal;
 					bool 				bActive;
 					bool 				bInaudible;
-				} ch_update_t;
+					bool                bForceAudible;  // Use if the sample rate does not allow actual inaudible noise
+				} ch_updinfo_t;
 
                 enum ch_mode_t
 				{
@@ -108,7 +109,7 @@ namespace lsp
                     dspu::ButterworthFilter	sAudibleStop; 		// Filter to stop the audible band
 
                     // Update settings info
-                    ch_update_t 			sChUpd; 			// Info to update the plugin settings
+                    ch_updinfo_t 			sChUpd; 			// Info to update the plugin settings
 
                     // Parameters
                     dspu::lcg_dist_t 		enLCGDist;			// LCG Distribution

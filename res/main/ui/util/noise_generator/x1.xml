@@ -1,56 +1,53 @@
 <plugin resizable="true">
-	<grid rows="5" cols="5" spacing="4">
-		<!-- Row 1 -->
-		<label text="labels.chan.in" />
-		<cell cols="4">
-			<!-- Mono meter for mono version -->
-			<ui:if test="!ex :in_l">
-				<ledmeter hexpand="true" angle="0">
-					<ledchannel id="min" min="-36 db" max="+6 db" log="true" type="rms_peak" peak.visibility="true" value.color="mid_in"/>
-				</ledmeter>
-			</ui:if>
-			<!-- Stereo meter for stereo version -->
-			<ui:if test="ex :in_l">
-				<ledmeter hexpand="true" angle="0">
-					<ledchannel id="min_l" min="-36 db" max="+6 db" log="true" type="rms_peak" peak.visibility="true" value.color="left_in"/>
-					<ledchannel id="min_r" min="-36 db" max="+6 db" log="true" type="rms_peak" peak.visibility="true" value.color="right_in"/>
-				</ledmeter>
-			</ui:if>
-		</cell>
-		<!-- Row 2 -->
-		<label text="labels.samples" />
-		<label text="labels.signal.dry" />
-		<label text="labels.signal.wet" />
-		<label text="labels.delay:ms" />
-		<label text="labels.output" />
-		<!-- Row 3 -->
-		<knob id="d_in" />
-		<knob id="dry" scale_color="yellow" />
-		<knob id="wet" scale_color="yellow" />
-		<indicator id="d_t" format="f6.2!" tcolor="ind_text"/>
-		<knob id="g_out" />
-		<!-- Row 4 -->
-		<value id="d_in" />
-		<value id="dry" />
-		<value id="wet" />
-		<void />
-		<knob id="g_out" />
-		<!-- Row 5 -->
-		<label text="labels.chan.out" />
-		<cell cols="4">
-			<!-- Mono meter for mono version -->
-			<ui:if test="!ex :in_l">
-				<ledmeter hexpand="true" angle="0">
-					<ledchannel id="mout" min="-36 db" max="+6 db" log="true" type="rms_peak" peak.visibility="true" value.color="mid"/>
-				</ledmeter>
-			</ui:if>
-			<!-- Stereo meter for stereo version -->
-			<ui:if test="ex :in_l">
-				<ledmeter hexpand="true" angle="0">
-					<ledchannel id="mout_l" min="-36 db" max="+6 db" log="true" type="rms_peak" peak.visibility="true" value.color="left_in"/>
-					<ledchannel id="mout_r" min="-36 db" max="+6 db" log="true" type="rms_peak" peak.visibility="true" value.color="right_in"/>
-				</ledmeter>
-			</ui:if>
-		</cell>
-	</grid>
+	<vbox spacing="4">
+	
+		<group text="General" ipdadding="0" fill="true">
+			<grid rows="2" cols="6" bg.color="bg_schema">
+				<label text="Noise Type"/>
+				<label text="Noise Mode"/>
+				<label text="Noise Amplitude"/>
+				<label text="Noise Offset"/>
+				<label text="Make Inaudible"/>
+				<label text="Distribution" />
+				
+				<combo id="nst_1" />
+				<combo id="nsm_1" />
+				<knob id="nsa_1" />
+				<knob id="nso_1" />
+				<button id="inas_1" />
+				<combo id="lcgd_1" />
+			</grid>
+		</group>
+		
+		<group text="Color" ipdadding="0" fill="true">
+			<grid rows="2" cols="4" bg.color="bg_schema">
+				<label text="Color"/>
+				<label text="Slope NPN"/>
+				<label text="Slope DBO"/>
+				<label text="Slope DBD"/>
+				
+				<combo id="cols_1" />
+				<knob id="csnpn_1" />
+				<knob id="csdbo_1" />
+				<knob id="csdbd_1" />
+			</grid>
+		</group>
+		
+		<group text="Velvet" ipdadding="0" fill="true">
+			<grid rows="2" cols="5" bg.color="bg_schema">
+				<label text="Type"/>
+				<label text="Window"/>
+				<label text="ARN"/>
+				<label text="Crush"/>
+				<label text="Crush Probability"/>
+				
+				<combo id="velt_1" />
+				<knob id="velw_1" />
+				<knob id="veld_1" />
+				<button id="velcs_1" />
+				<knob id="velc_1" />
+			</grid>
+		</group>
+		
+	</vbox>
 </plugin>

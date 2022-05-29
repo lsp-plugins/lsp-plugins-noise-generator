@@ -108,10 +108,10 @@ namespace lsp
 
             static const float  NOISE_AMPLITUDE_DFL			= 1.0f;
 
-            static const float  NOISE_OFFSET_MIN			= -100.0f;
-            static const float  NOISE_OFFSET_MAX  			= 100.0f;
+            static const float  NOISE_OFFSET_MIN			= -10.0f;
+            static const float  NOISE_OFFSET_MAX  			= 10.0f;
             static const float  NOISE_OFFSET_DFL 			= 0.0f;
-            static const float  NOISE_OFFSET_STEP			= 1.0e-3f;
+            static const float  NOISE_OFFSET_STEP			= 0.1f;
 
         	enum noise_mode_selector_t
 			{

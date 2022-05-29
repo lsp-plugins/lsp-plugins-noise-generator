@@ -125,7 +125,7 @@ namespace lsp
 			COMBO("velt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
 			LOG_CONTROL("velw" id, "Velvet Window" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
 			LOG_CONTROL("veld" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
-			SWITCH("velcs", "Velvet Crushing Switch", 0.0f), \
+			SWITCH("velcs" id, "Velvet Crushing Switch", 0.0f), \
 			CONTROL("velc" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
 
 		#define COLOR_CONTROLS(id, label) \
@@ -137,9 +137,9 @@ namespace lsp
 		#define NOISE_CONTROLS(id, label) \
 			COMBO("nst" id, "Noise Type" label, noise_generator::NOISE_TYPE_DFL, noise_type), \
 			COMBO("nsm" id, "Noise Mode" label, noise_generator::NOISE_MODE_DFL, noise_mode), \
-			AMP_GAIN10("nsa", "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
+			AMP_GAIN10("nsa" id, "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
 			CONTROL("nso" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
-			SWITCH("inas", "Make Inaudible Switch", 0.0f)
+			SWITCH("inas" id, "Make Inaudible Switch", 0.0f)
 
 		#define CHANNEL_CONTROLS(id, label) \
 			LCG_CONTROLS(id, label), \
@@ -222,7 +222,7 @@ namespace lsp
             noise_generator_classes,
             E_DUMP_STATE,
             noise_generator_x1_ports,
-            "template/plugin.xml",
+            "util/noise_generator/x1.xml",
             NULL,
 			NULL,
             &noise_generator_bundle
@@ -244,7 +244,7 @@ namespace lsp
             noise_generator_classes,
             E_DUMP_STATE,
             noise_generator_x2_ports,
-            "template/plugin.xml",
+            "util/noise_generator/x2.xml",
             NULL,
 			NULL,
             &noise_generator_bundle
@@ -266,7 +266,7 @@ namespace lsp
             noise_generator_classes,
             E_DUMP_STATE,
             noise_generator_x4_ports,
-            "template/plugin.xml",
+            "util/noise_generator/x4.xml",
             NULL,
 			NULL,
             &noise_generator_bundle
