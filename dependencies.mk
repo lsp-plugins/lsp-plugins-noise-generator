@@ -41,6 +41,8 @@ DEPENDENCIES = \
 TEST_DEPENDENCIES = \
   LSP_TEST_FW
 
+DEFAULT_FEATURES = doc ladspa lv2 vst2
+
 #------------------------------------------------------------------------------
 # Platform-specific dependencies
 ifeq ($(PLATFORM),Linux)
@@ -50,6 +52,8 @@ ifeq ($(PLATFORM),Linux)
     LIBX11 \
     LIBCAIRO \
     LIBFREETYPE
+  
+  DEFAULT_FEATURES += jack
 endif
 
 ifeq ($(PLATFORM),BSD)
@@ -58,11 +62,14 @@ ifeq ($(PLATFORM),BSD)
     LIBSNDFILE \
     LIBX11 \
     LIBCAIRO \
+    LIBICONV \
     LIBFREETYPE
+  
+  DEFAULT_FEATURES += jack
 endif
 
 ifeq ($(PLATFORM),Windows)
-  DEPENDENCIES             += \
+  DEPENDENCIES += \
     LIBSHLWAPI \
     LIBWINMM \
     LIBMSACM
@@ -84,3 +91,5 @@ ALL_DEPENDENCIES = \
   LIBSHLWAPI \
   LIBWINMM \
   LIBMSACM
+
+
