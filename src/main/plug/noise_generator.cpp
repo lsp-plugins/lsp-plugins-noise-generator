@@ -285,14 +285,14 @@ namespace lsp
                 c->sNoiseGenerator.set_velvet_crushing_probability(c->fVelvetCrushP);
             }
 
-            // If the noise has to be inaudible we are best setting it to white, or excessive high frequency boost will make it audible.
-            // Conversely, excessive low frequency attenuation will make it non-existent.
-            if (c->sChUpd.bInaudible)
-                c->sNoiseGenerator.set_noise_color(dspu::NG_COLOR_WHITE);
-
             if (c->sChUpd.nUpdate & UPD_COLOR)
             {
                 c->enColor = get_color(c->sChUpd.sStateStage.nPV_pColorSel);
+                // If the noise has to be inaudible we are best setting it to white, or excessive high frequency boost will make it audible.
+                // Conversely, excessive low frequency attenuation will make it non-existent.
+                if (c->sChUpd.bInaudible)
+                    c->enColor = dspu::NG_COLOR_WHITE;
+
                 c->sNoiseGenerator.set_noise_color(c->enColor);
             }
 
@@ -363,7 +363,7 @@ namespace lsp
 
             // Estimate the number of bytes to allocate
             size_t szof_channels    = align_size(sizeof(channel_t) * nChannels, OPTIMAL_ALIGN);
-            size_t buf_sz           = BUFFER_SIZE * sizeof(float);
+            size_t buf_sz           = nChannels * BUFFER_SIZE * sizeof(float);  // One buffer per channel
             size_t alloc            = szof_channels + buf_sz;
 
             // Allocate memory-aligned data
@@ -600,6 +600,7 @@ namespace lsp
                 else
                     c->sChUpd.bForceAudible = false;
 
+                c->sNoiseGenerator.set_sample_rate(sr);
                 c->sAudibleStop.set_sample_rate(sr);
                 c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
                 c->sAudibleStop.update_settings();
@@ -769,73 +770,71 @@ namespace lsp
                 if (!c->sChUpd.bActive)
                 {
                     dsp::fill_zero(out, samples);
-                    return;
                 }
-
-                if (c->sChUpd.bInaudible)
+                else
                 {
-                    while (samples > 0)
-                    {
-                        size_t to_do = (samples > BUFFER_SIZE) ? BUFFER_SIZE : samples;
-                        c->sNoiseGenerator.process_overwrite(vBuffer, to_do);
-                        dsp::mul_k2(vBuffer, INA_ATTENUATION, to_do);
+                    // We process the samples for this channel, so we modify a samples copy otherwise the next channel will process 0 samples.
+                    size_t count = samples;
 
+                    if (c->sChUpd.bInaudible)
+                    {
+                        while (count > 0)
+                        {
+                            size_t to_do = (count > BUFFER_SIZE) ? BUFFER_SIZE : count;
+                            c->sNoiseGenerator.process_overwrite(vBuffer, to_do);
+                            dsp::mul_k2(vBuffer, INA_ATTENUATION, to_do);
+
+                            switch (c->enMode)
+                            {
+                                case CH_MODE_OVERWRITE:
+                                {
+                                    c->sAudibleStop.process_overwrite(out, vBuffer, to_do);
+                                }
+                                break;
+
+                                case CH_MODE_ADD:
+                                {
+                                    dsp::copy(out, in, to_do);
+                                    c->sAudibleStop.process_add(out, vBuffer, to_do);
+                                }
+                                break;
+
+                                case CH_MODE_MULT:
+                                {
+                                    dsp::copy(out, in, to_do);
+                                    c->sAudibleStop.process_mul(out, vBuffer, to_do);
+                                }
+                                break;
+                            }
+
+                            in      += to_do;
+                            out     += to_do;
+                            count -= to_do;
+                        }
+                    }
+                    else
+                    {
                         switch (c->enMode)
                         {
                             case CH_MODE_OVERWRITE:
                             {
-                                c->sAudibleStop.process_overwrite(out, vBuffer, to_do);
+                                c->sNoiseGenerator.process_overwrite(out, count);
                             }
                             break;
 
                             case CH_MODE_ADD:
                             {
-                                dsp::copy(out, in, to_do);
-                                c->sAudibleStop.process_add(out, vBuffer, to_do);
+                                c->sNoiseGenerator.process_add(out, in, count);
                             }
                             break;
 
                             case CH_MODE_MULT:
                             {
-                                dsp::copy(out, in, to_do);
-                                c->sAudibleStop.process_mul(out, vBuffer, to_do);
+                                c->sNoiseGenerator.process_mul(out, in, count);
                             }
                             break;
                         }
-
-//                        // Sum the offset
-//                        dsp::add_k2(out, c->fOffset, to_do);
-
-                        in      += to_do;
-                        out     += to_do;
-                        samples -= to_do;
                     }
-                }
-                else
-                {
-                    switch (c->enMode)
-                    {
-                        case CH_MODE_OVERWRITE:
-                        {
-                            c->sNoiseGenerator.process_overwrite(out, samples);
-                        }
-                        break;
-
-                        case CH_MODE_ADD:
-                        {
-                            c->sNoiseGenerator.process_add(out, in, samples);
-                        }
-                        break;
-
-                        case CH_MODE_MULT:
-                        {
-                            c->sNoiseGenerator.process_mul(out, in, samples);
-                        }
-                        break;
-                    }
-
-//                    // Sum the offset
-//                    dsp::add_k2(out, c->fOffset, samples);
                 }
             }
         }

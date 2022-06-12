@@ -53,9 +53,9 @@ namespace lsp
 				NOISE_VELVET_DFL = NOISE_VELVET_OVN
 			};
 
-            static const float  VELVET_WINDOW_DURATION_MIN	= 1.0e-3f;
-            static const float  VELVET_WINDOW_DURATION_MAX  = 10.0f;
-            static const float  VELVET_WINDOW_DURATION_DFL 	= 1.0f;
+            static const float  VELVET_WINDOW_DURATION_MIN	= 0.0f;
+            static const float  VELVET_WINDOW_DURATION_MAX  = 0.1f;
+            static const float  VELVET_WINDOW_DURATION_DFL 	= 0.0f;
             static const float  VELVET_WINDOW_DURATION_STEP	= 1.0e-3f;
 
             static const float  VELVET_ARN_DELTA_MIN		= 0.0f;

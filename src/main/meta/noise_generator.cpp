@@ -45,48 +45,48 @@ namespace lsp
 
         static const port_item_t noise_lcg_dist[] =
         {
-            {"Uniform",        					"noisegenerator.lcg.uniform"},
-            {"Exponential",						"noisegenerator.lcg.exponential"},
-            {"Triangular",     					"noisegenerator.lcg.triangular"},
-            {"Gaussian",       					"noisegenerator.lcg.gaussian"},
+            {"Uniform",        					"noise_generator.lcg.uniform"},
+            {"Exponential",						"noise_generator.lcg.exponential"},
+            {"Triangular",     					"noise_generator.lcg.triangular"},
+            {"Gaussian",       					"noise_generator.lcg.gaussian"},
             {NULL,          					NULL}
         };
 
         static const port_item_t noise_velvet_type[] =
         {
-            {"OVN",        						"noisegenerator.velvet.ovn"},
-            {"OVNA",							"noisegenerator.velvet.ovna"},
-            {"ARN",     						"noisegenerator.velvet.arn"},
-            {"TRN",       						"noisegenerator.velvet.trn"},
+            {"OVN",        						"noise_generator.velvet.ovn"},
+            {"OVNA",							"noise_generator.velvet.ovna"},
+            {"ARN",     						"noise_generator.velvet.arn"},
+            {"TRN",       						"noise_generator.velvet.trn"},
             {NULL,          					NULL}
         };
 
         static const port_item_t noise_type[] =
         {
-            {"MLS",        						"noisegenerator.type.mls"},
-            {"LCG",								"noisegenerator.type.lcg"},
-            {"VELVET",     						"noisegenerator.type.velvet"},
+            {"MLS",        						"noise_generator.type.mls"},
+            {"LCG",								"noise_generator.type.lcg"},
+            {"VELVET",     						"noise_generator.type.velvet"},
             {NULL,          					NULL}
         };
 
         static const port_item_t noise_color[] =
         {
-            {"White",        					"noisegenerator.color.white"},
-            {"Pink",							"noisegenerator.color.pink"},
-            {"Red",     						"noisegenerator.color.red"},
-            {"Blue",       						"noisegenerator.color.blue"},
-			{"Violet",       					"noisegenerator.color.violet"},
-			{"Arbitrary (Neper per Neper)",		"noisegenerator.color.npn"},
-			{"Arbitrary (dB per Octave)",   	"noisegenerator.color.dbo"},
-			{"Arbitrary (dB per Decade)",    	"noisegenerator.color.dbd"},
+            {"White",        					"noise_generator.color.white"},
+            {"Pink",							"noise_generator.color.pink"},
+            {"Red",     						"noise_generator.color.red"},
+            {"Blue",       						"noise_generator.color.blue"},
+			{"Violet",       					"noise_generator.color.violet"},
+			{"Arbitrary (Neper per Neper)",		"noise_generator.color.npn"},
+			{"Arbitrary (dB per Octave)",   	"noise_generator.color.dbo"},
+			{"Arbitrary (dB per Decade)",    	"noise_generator.color.dbd"},
             {NULL,          					NULL}
         };
 
         static const port_item_t noise_mode[] =
         {
-            {"Overwrite",        				"noisegenerator.mode.over"},
-            {"Add",								"noisegenerator.mode.add"},
-            {"Multiply",     					"noisegenerator.mode.mult"},
+            {"Overwrite",        				"noise_generator.mode.over"},
+            {"Add",								"noise_generator.mode.add"},
+            {"Multiply",     					"noise_generator.mode.mult"},
             {NULL,          					NULL}
         };
 

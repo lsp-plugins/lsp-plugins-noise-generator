@@ -2,50 +2,57 @@
 	<vbox spacing="4">
 	
 		<group text="General" ipdadding="0" fill="true">
-			<grid rows="2" cols="6" bg.color="bg_schema">
+			<grid rows="2" cols="5" bg.color="bg_schema">
 				<label text="Noise Type"/>
 				<label text="Noise Mode"/>
 				<label text="Noise Amplitude"/>
 				<label text="Noise Offset"/>
 				<label text="Make Inaudible"/>
-				<label text="Distribution" />
 				
 				<combo id="nst_1" />
 				<combo id="nsm_1" />
 				<knob id="nsa_1" />
 				<knob id="nso_1" />
 				<button id="inas_1" />
-				<combo id="lcgd_1" />
 			</grid>
+		</group>
+		
+		<group text="Noise Specific Controls" ipdadding="0" fill="true">
+			<vbox>
+			
+				<grid rows="2" cols="1" bg.color="bg_schema" visibility=":nst_1 ieq 1">
+					<label text="Distribution" />
+					<combo id="lcgd_1" />
+				</grid>
+				
+				<grid rows="2" cols="5" bg.color="bg_schema" visibility=":nst_1 ieq 2">
+					<label text="Type"/>
+					<label text="Window"/>
+					<label text="Delta" visibility=":velt_1 ieq 2"/>
+					<label text="Crush"/>
+					<label text="Crush Probability"/>
+					
+					<combo id="velt_1" />
+					<knob id="velw_1" />
+					<knob id="veld_1" visibility=":velt_1 ieq 2"/>
+					<button id="velcs_1" />
+					<knob id="velc_1" />
+				</grid>
+			
+			</vbox>
 		</group>
 		
 		<group text="Color" ipdadding="0" fill="true">
 			<grid rows="2" cols="4" bg.color="bg_schema">
 				<label text="Color"/>
-				<label text="Slope NPN"/>
-				<label text="Slope DBO"/>
-				<label text="Slope DBD"/>
+				<label text="Slope" visibility=":cols_1 ieq 5"/>
+				<label text="Slope" visibility=":cols_1 ieq 6"/>
+				<label text="Slope" visibility=":cols_1 ieq 7"/>
 				
 				<combo id="cols_1" />
-				<knob id="csnpn_1" />
-				<knob id="csdbo_1" />
-				<knob id="csdbd_1" />
-			</grid>
-		</group>
-		
-		<group text="Velvet" ipdadding="0" fill="true">
-			<grid rows="2" cols="5" bg.color="bg_schema">
-				<label text="Type"/>
-				<label text="Window"/>
-				<label text="ARN"/>
-				<label text="Crush"/>
-				<label text="Crush Probability"/>
-				
-				<combo id="velt_1" />
-				<knob id="velw_1" />
-				<knob id="veld_1" />
-				<button id="velcs_1" />
-				<knob id="velc_1" />
+				<knob id="csnpn_1" visibility=":cols_1 ieq 5"/>
+				<knob id="csdbo_1" visibility=":cols_1 ieq 6"/>
+				<knob id="csdbd_1" visibility=":cols_1 ieq 7"/>
 			</grid>
 		</group>
 		
