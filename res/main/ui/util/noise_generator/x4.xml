@@ -125,7 +125,7 @@
 									<label text="labels.noise_generator.V_type"/>
 									<label text="labels.noise_generator.V_window"/>
 									<label text="labels.noise_generator.V_delta" visibility=":velt_${i} ieq 2"/>
-									<label text="labels.noise_generator.V_Crush"/>
+									<label text="labels.noise_generator.V_crush"/>
 									<label text="labels.noise_generator.V_crush_prob"/>
 									
 									<combo id="velt_${i}" />

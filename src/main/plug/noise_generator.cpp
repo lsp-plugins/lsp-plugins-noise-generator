@@ -351,8 +351,6 @@ namespace lsp
                 c->sNoiseGenerator.set_offset(c->fOffset);
             }
 
-            c->sNoiseGenerator.update_settings();
-
             c->sChUpd.nUpdate = 0;
         }
 
@@ -396,7 +394,6 @@ namespace lsp
                 // We also set the inaudible noise filter main properties. These are not user configurable.
                 c->sAudibleStop.set_order(INA_FILTER_ORD);
                 c->sAudibleStop.set_filter_type(dspu::BW_FLT_TYPE_HIGHPASS);
-                c->sAudibleStop.update_settings();
 
                 // Same with colour
                 c->sNoiseGenerator.set_coloring_order(COLOR_FILTER_ORDER);
@@ -603,7 +600,6 @@ namespace lsp
                 c->sNoiseGenerator.set_sample_rate(sr);
                 c->sAudibleStop.set_sample_rate(sr);
                 c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
-                c->sAudibleStop.update_settings();
             }
         }
 
