@@ -203,7 +203,7 @@ namespace lsp
             "Noise Generator",
             B_UTILITIES,
             "", // TODO: provide ID of the video on YouTube
-            "" // TODO: write plugin description, should be the same to the english version in 'bundles.json'
+            "A flexible noise generator supporting different algorithms, colors, and inaudible noise."
         };
 
         const plugin_t noise_generator_x1 =
@@ -215,8 +215,8 @@ namespace lsp
             "noise_generator_x1",
             LSP_LV2_URI("noise_generator_x1"),
             LSP_LV2UI_URI("noise_generator_x1"),
-            "----",         // TODO: fill valid VST2 ID (4 letters/digits)
-            0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            "lng0",
+            LSP_LADSPA_NOISE_GENERATOR_BASE + 0,
             LSP_LADSPA_URI("noise_generator_x1"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
             noise_generator_classes,
@@ -237,8 +237,8 @@ namespace lsp
             "noise_generator_x2",
             LSP_LV2_URI("noise_generator_x2"),
             LSP_LV2UI_URI("noise_generator_x2"),
-            "----",         // TODO: fill valid VST2 ID (4 letters/digits)
-            0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            "lng1",
+            LSP_LADSPA_NOISE_GENERATOR_BASE + 1,
             LSP_LADSPA_URI("noise_generator_x2"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
             noise_generator_classes,
@@ -259,8 +259,8 @@ namespace lsp
             "noise_generator_x4",
             LSP_LV2_URI("noise_generator_x4"),
             LSP_LV2UI_URI("noise_generator_x4"),
-            "----",         // TODO: fill valid VST2 ID (4 letters/digits)
-            0,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            "lng2",
+            LSP_LADSPA_NOISE_GENERATOR_BASE + 2,
             LSP_LADSPA_URI("noise_generator_x4"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
             noise_generator_classes,

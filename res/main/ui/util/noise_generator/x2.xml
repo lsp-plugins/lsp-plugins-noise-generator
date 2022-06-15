@@ -12,7 +12,7 @@
 	
 		<hbox spacing="4">
 	
-			<group text="Global">
+			<group text="labels.groups.general">
 			
 				<vbox spacing="4">
 		
@@ -108,6 +108,12 @@
 								<knob id="nsa_${i}" />
 								<knob id="nso_${i}" />
 								<button id="inas_${i}" />
+								
+								<void />
+								<void />
+								<value id="nsa_${i}" />
+								<value id="nso_${i}" />
+								<void />
 							</grid>
 						</group>
 						
@@ -119,7 +125,7 @@
 									<combo id="lcgd_${i}" />
 								</grid>
 								
-								<grid rows="2" cols="5" bg.color="${bgcol}" visibility=":nst_${i} ieq 2">
+								<grid rows="3" cols="5" bg.color="${bgcol}" visibility=":nst_${i} ieq 2">
 									<label text="Type"/>
 									<label text="Window"/>
 									<label text="Delta" visibility=":velt_${i} ieq 2"/>
@@ -131,6 +137,12 @@
 									<knob id="veld_${i}" visibility=":velt_${i} ieq 2"/>
 									<button id="velcs_${i}" />
 									<knob id="velc_${i}" />
+									
+									<void />
+									<value id="velw_${i}" />
+									<value id="veld_${i}" />
+									<void />
+									<value id="velc_${i}" />
 								</grid>
 							
 							</vbox>

@@ -1,8 +1,8 @@
 <plugin resizable="true">
 	<vbox spacing="4">
 	
-		<group text="General" ipdadding="0" fill="true">
-			<grid rows="2" cols="5" bg.color="bg_schema">
+		<group text="labels.groups.general" ipdadding="0" fill="true">
+			<grid rows="3" cols="5" bg.color="bg_schema">
 				<label text="Noise Type"/>
 				<label text="Noise Mode"/>
 				<label text="Noise Amplitude"/>
@@ -14,6 +14,12 @@
 				<knob id="nsa_1" />
 				<knob id="nso_1" />
 				<button id="inas_1" />
+				
+				<void />
+				<void />
+				<value id="nsa_1" />
+				<value id="nso_1" />
+				<void />
 			</grid>
 		</group>
 		
@@ -25,7 +31,7 @@
 					<combo id="lcgd_1" />
 				</grid>
 				
-				<grid rows="2" cols="5" bg.color="bg_schema" visibility=":nst_1 ieq 2">
+				<grid rows="3" cols="5" bg.color="bg_schema" visibility=":nst_1 ieq 2">
 					<label text="Type"/>
 					<label text="Window"/>
 					<label text="Delta" visibility=":velt_1 ieq 2"/>
@@ -37,13 +43,19 @@
 					<knob id="veld_1" visibility=":velt_1 ieq 2"/>
 					<button id="velcs_1" />
 					<knob id="velc_1" />
+					
+					<void />
+					<value id="velw_1" />
+					<value id="veld_1" />
+					<void />
+					<value id="velc_1" />
 				</grid>
 			
 			</vbox>
 		</group>
 		
 		<group text="Color" ipdadding="0" fill="true">
-			<grid rows="2" cols="4" bg.color="bg_schema">
+			<grid rows="3" cols="4" bg.color="bg_schema">
 				<label text="Color"/>
 				<label text="Slope" visibility=":cols_1 ieq 5"/>
 				<label text="Slope" visibility=":cols_1 ieq 6"/>
@@ -53,6 +65,11 @@
 				<knob id="csnpn_1" visibility=":cols_1 ieq 5"/>
 				<knob id="csdbo_1" visibility=":cols_1 ieq 6"/>
 				<knob id="csdbd_1" visibility=":cols_1 ieq 7"/>
+				
+				<void />
+				<value id="csnpn_1" visibility=":cols_1 ieq 5"/>
+				<value id="csdbo_1" visibility=":cols_1 ieq 6"/>
+				<value id="csdbd_1" visibility=":cols_1 ieq 7"/>
 			</grid>
 		</group>
 		
