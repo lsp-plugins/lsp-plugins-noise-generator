@@ -96,8 +96,8 @@ namespace lsp
 					return dspu::LCG_EXPONENTIAL;
 				case meta::noise_generator_metadata::NOISE_LCG_TRIANGULAR:
 					return dspu::LCG_TRIANGULAR;
-				default:
 				case meta::noise_generator_metadata::NOISE_LCG_GAUSSIAN:
+                default:
 					return dspu::LCG_GAUSSIAN;
         	}
         }
@@ -112,8 +112,8 @@ namespace lsp
                     return dspu::VN_VELVET_ARN;
                 case meta::noise_generator_metadata::NOISE_VELVET_TRN:
                     return dspu::VN_VELVET_TRN;
-                default:
                 case meta::noise_generator_metadata::NOISE_VELVET_OVN:
+                default:
                     return dspu::VN_VELVET_OVN;
             }
         }
@@ -134,8 +134,8 @@ namespace lsp
         		case meta::noise_generator_metadata::NOISE_COLOR_ARBITRARY_DBO:
         		case meta::noise_generator_metadata::NOISE_COLOR_ARBITRARY_DBD:
         			return dspu::NG_COLOR_ARBITRARY;
-        		default:
         		case meta::noise_generator_metadata::NOISE_COLOR_WHITE:
+                default:
         			return dspu::NG_COLOR_WHITE;
         	}
         }
@@ -148,8 +148,8 @@ namespace lsp
         			return dspu::STLT_SLOPE_UNIT_DB_PER_OCTAVE;
         		case meta::noise_generator_metadata::NOISE_COLOR_ARBITRARY_DBD:
         			return dspu::STLT_SLOPE_UNIT_DB_PER_DECADE;
-        		default:
         		case meta::noise_generator_metadata::NOISE_COLOR_ARBITRARY_NPN:
+                default:
         			return dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER;
         	}
         }
@@ -162,8 +162,8 @@ namespace lsp
 					return dspu::NG_GEN_MLS;
 				case meta::noise_generator_metadata::NOISE_TYPE_VELVET:
 					return dspu::NG_GEN_VELVET;
-				default:
 				case meta::noise_generator_metadata::NOISE_TYPE_LCG:
+                default:
 					return dspu::NG_GEN_LCG;
 			}
         }
@@ -176,8 +176,8 @@ namespace lsp
         			return CH_MODE_ADD;
         		case meta::noise_generator_metadata::NOISE_MODE_MULT:
         			return CH_MODE_MULT;
-        		default:
         		case meta::noise_generator_metadata::NOISE_MODE_OVERWRITE:
+                default:
         			return CH_MODE_OVERWRITE;
         	}
         }
@@ -216,8 +216,8 @@ namespace lsp
         	c->sChUpd.sStateStage.fPV_pOffset = meta::noise_generator_metadata::NOISE_OFFSET_DFL;
         	c->sChUpd.nUpdate |= UPD_NOISE_OFFSET;
 
-        	c->sChUpd.bActive = false;
-        	c->sChUpd.bInaudible = false;
+        	c->sChUpd.bActive       = false;
+        	c->sChUpd.bInaudible    = false;
         }
 
         void noise_generator::commit_staged_state_change(channel_t *c)
@@ -283,23 +283,17 @@ namespace lsp
                 {
 
                     case dspu::STLT_SLOPE_UNIT_DB_PER_OCTAVE:
-                    {
                         c->fColorSlope = c->sChUpd.sStateStage.fPV_pCslopeDBO;
-                    }
-                    break;
+                        break;
 
                     case dspu::STLT_SLOPE_UNIT_DB_PER_DECADE:
-                    {
                         c->fColorSlope = c->sChUpd.sStateStage.fPV_pCslopeDBD;
-                    }
-                    break;
+                        break;
 
-                    default:
                     case dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER:
-                    {
+                    default:
                         c->fColorSlope = c->sChUpd.sStateStage.fPV_pCslopeNPN;
-                    }
-                    break;
+                        break;
                 }
 
                 c->sNoiseGenerator.set_color_slope(c->fColorSlope, c->enColorSlopeUnit);
@@ -521,11 +515,7 @@ namespace lsp
             {
                 channel_t *c = &vChannels[i];
 
-                if (0.5f * sr < INA_FILTER_CUTOFF)
-                    c->sChUpd.bForceAudible = true;
-                else
-                    c->sChUpd.bForceAudible = false;
-
+                c->sChUpd.bForceAudible = (0.5f * sr < INA_FILTER_CUTOFF);
                 c->sNoiseGenerator.set_sample_rate(sr);
                 c->sAudibleStop.set_sample_rate(sr);
                 c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
@@ -707,25 +697,20 @@ namespace lsp
 
                             switch (c->enMode)
                             {
-                                case CH_MODE_OVERWRITE:
-                                {
-                                    c->sAudibleStop.process_overwrite(out, vBuffer, to_do);
-                                }
-                                break;
-
                                 case CH_MODE_ADD:
-                                {
                                     dsp::copy(out, in, to_do);
                                     c->sAudibleStop.process_add(out, vBuffer, to_do);
-                                }
-                                break;
+                                    break;
 
                                 case CH_MODE_MULT:
-                                {
                                     dsp::copy(out, in, to_do);
                                     c->sAudibleStop.process_mul(out, vBuffer, to_do);
-                                }
-                                break;
+                                    break;
+
+                                case CH_MODE_OVERWRITE:
+                                default:
+                                    c->sAudibleStop.process_overwrite(out, vBuffer, to_do);
+                                    break;
                             }
 
                             in      += to_do;
@@ -737,23 +722,18 @@ namespace lsp
                     {
                         switch (c->enMode)
                         {
-                            case CH_MODE_OVERWRITE:
-                            {
-                                c->sNoiseGenerator.process_overwrite(out, count);
-                            }
-                            break;
-
                             case CH_MODE_ADD:
-                            {
                                 c->sNoiseGenerator.process_add(out, in, count);
-                            }
-                            break;
+                                break;
 
                             case CH_MODE_MULT:
-                            {
                                 c->sNoiseGenerator.process_mul(out, in, count);
-                            }
-                            break;
+                                break;
+
+                            case CH_MODE_OVERWRITE:
+                            default:
+                                c->sNoiseGenerator.process_overwrite(out, count);
+                                break;
                         }
                     }
                 }
@@ -765,6 +745,7 @@ namespace lsp
             // It is very useful to dump plugin state for debug purposes
             v->write("nChannels", nChannels);
             v->begin_array("vChannels", vChannels, nChannels);
+
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c = &vChannels[i];
