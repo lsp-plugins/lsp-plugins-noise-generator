@@ -43,56 +43,11 @@ namespace lsp
             protected:
                 enum ch_update_t
                 {
-                	UPD_LCG_DIST 			= 1 << 0,
-
-					UPD_VELVET_TYPE 		= 1 << 1,
-					UPD_VELVET_WIN 			= 1 << 2,
-					UPD_VELVET_ARN_D 		= 1 << 3,
-					UPD_VELVET_CRUSH 		= 1 << 4,
-					UPD_VELVET_CRUSH_P 		= 1 << 5,
-
-					UPD_COLOR 				= 1 << 6,
-					UPD_COLOR_SLOPE 		= 1 << 7,
-					UPD_COLOR_SLOPE_UNIT 	= 1 << 8,
-
 					UPD_NOISE_TYPE 			= 1 << 9,
 					UPD_NOISE_MODE 			= 1 << 10,
 					UPD_NOISE_AMPLITUDE 	= 1 << 11,
 					UPD_NOISE_OFFSET 		= 1 << 12
                 };
-
-                typedef struct ch_state_stage_t
-				{
-                	// These hold a snapshot of the port values.
-                	// Check the types!
-
-                	size_t 	nPV_pLCGdist;
-
-                	size_t 	nPV_pVelvetType;
-                	float 	fPV_pVelvetWin;
-                	float 	fPV_pVelvetARNd;
-                	bool 	bPV_pVelvetCSW;
-                	float 	fPV_pVelvetCpr;
-
-                	size_t 	nPV_pColorSel;
-                	float 	fPV_pCslopeNPN;
-                	float 	fPV_pCslopeDBO;
-                	float 	fPV_pCslopeDBD;
-
-                	size_t 	nPV_pNoiseType;
-                	size_t 	nPV_pNoiseMode;
-                	float 	fPV_pAmplitude;
-                	float 	fPV_pOffset;
-				} ch_state_stage_t;
-
-				typedef struct ch_updinfo_t
-				{
-					size_t 				nUpdate;
-					ch_state_stage_t 	sStateStage;
-					bool 				bActive;
-					bool 				bInaudible;
-					bool                bForceAudible;  // Use if the sample rate does not allow actual inaudible noise
-				} ch_updinfo_t;
 
                 enum ch_mode_t
 				{
@@ -107,26 +62,11 @@ namespace lsp
                     dspu::NoiseGenerator	sNoiseGenerator;	// Noise Generator
                     dspu::ButterworthFilter	sAudibleStop; 		// Filter to stop the audible band
 
-                    // Update settings info
-                    ch_updinfo_t 			sChUpd; 			// Info to update the plugin settings
-
                     // Parameters
-                    dspu::lcg_dist_t 		enLCGDist;			// LCG Distribution
-
-                    dspu::vn_velvet_type_t	enVelvetType;		// Velvet Noise Type
-                    float 					fVelvetWin; 		// Velvet Noise Window Width [seconds]
-                    float 					fVelvetARNd; 		// Velvet ARN Delta (a value between 0 and 1)
-                    bool 					bVelvetCrush; 		// Whether or Not to Crush the Velvet Noise
-                    float					fVelvetCrushP; 		// Velvet Noise Crush Probability
-
-                    dspu::ng_color_t 		enColor; 			// Noise Colour
-                    float 					fColorSlope; 		// Noise Colour Slope (if Custom)
-                    dspu::stlt_slope_unit_t enColorSlopeUnit; 	// Noise Colour Slope Unit (if Custom)
-
-                    dspu::ng_generator_t 	enNoiseType; 		// The type of noise
-                    ch_mode_t 				enMode; 			// The Channel Mode
-                    float 					fAmplitude; 		// The Channel Amplitude
-                    float 					fOffset; 			// The Channel Offset
+                    ch_mode_t               enMode;             // The Channel Mode
+                    bool                    bActive;
+                    bool                    bInaudible;
+                    bool                    bForceAudible;      // Use if the sample rate does not allow actual inaudible noise
 
                     // Audio Ports
                     plug::IPort        		*pIn;         		// Input port
@@ -180,8 +120,6 @@ namespace lsp
                 static dspu::stlt_slope_unit_t 	get_color_slope_unit(size_t portValue);
                 static dspu::ng_generator_t 	get_generator_type(size_t portValue);
                 static ch_mode_t 				get_channel_mode(size_t portValue);
-                void 							init_state_stage(channel_t *c);
-                void 							commit_staged_state_change(channel_t *c);
         };
     }
 }
