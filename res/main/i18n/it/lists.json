@@ -1,0 +1,36 @@
+{
+	"noise_generator": {
+		"lcg": {
+			"uniform": "Uniforme",
+			"exponential": "Esponenziale",
+			"triangular": "Triangolare",
+			"gaussian": "Gaussiana"
+		},
+		"velvet": {
+			"ovn": "OVN",
+			"ovna": "OVNA",
+			"arn": "ARN",
+			"trn": "TRN"
+		},
+		"type": {
+			"mls": "MLS",
+			"lcg": "LCG",
+			"velvet": "Velvet"
+		},
+		"color": {
+			"white": "Bianco",
+			"pink": "Rosa",
+			"red": "Rosso",
+			"blue": "Blu",
+			"violet": "Viola",
+			"npn": "Arbitrario (Neper per Neper)",
+			"dbo": "Arbitrario (dB per Ottava)",
+			"dbd": "Arbitrario (dB per Decade)"
+		},
+		"mode": {
+			"over": "Sovrascrittura",
+			"add": "Addizione",
+			"mult": "Moltiplicazione"
+		}
+	}
+}

@@ -1,13 +1,13 @@
 <plugin resizable="true">
 	<vbox spacing="4">
 	
-		<group text="labels.groups.general" ipdadding="0" fill="true">
+		<group text="labels.noise_generator.general" ipdadding="0" fill="true">
 			<grid rows="3" cols="5" bg.color="bg_schema">
-				<label text="Noise Type"/>
-				<label text="Noise Mode"/>
-				<label text="Noise Amplitude"/>
-				<label text="Noise Offset"/>
-				<label text="Make Inaudible"/>
+				<label text="labels.noise_generator.N_type"/>
+				<label text="labels.noise_generator.N_mode"/>
+				<label text="labels.noise_generator.N_amplitude"/>
+				<label text="labels.noise_generator.N_offset"/>
+				<label text="labels.noise_generator.M_inaudible"/>
 				
 				<combo id="nst_1" />
 				<combo id="nsm_1" />
@@ -23,20 +23,20 @@
 			</grid>
 		</group>
 		
-		<group text="Noise Specific Controls" ipdadding="0" fill="true">
+		<group text="labels.noise_generator.N_specs" ipdadding="0" fill="true">
 			<vbox>
 			
 				<grid rows="2" cols="1" bg.color="bg_schema" visibility=":nst_1 ieq 1">
-					<label text="Distribution" />
+					<label text="labels.noise_generator.distribution" />
 					<combo id="lcgd_1" />
 				</grid>
 				
 				<grid rows="3" cols="5" bg.color="bg_schema" visibility=":nst_1 ieq 2">
-					<label text="Type"/>
-					<label text="Window"/>
-					<label text="Delta" visibility=":velt_1 ieq 2"/>
-					<label text="Crush"/>
-					<label text="Crush Probability"/>
+					<label text="labels.noise_generator.V_type"/>
+					<label text="labels.noise_generator.V_window"/>
+					<label text="labels.noise_generator.V_delta" visibility=":velt_1 ieq 2"/>
+					<label text="labels.noise_generator.V_crush"/>
+					<label text="labels.noise_generator.V_crush_prob"/>
 					
 					<combo id="velt_1" />
 					<knob id="velw_1" />
@@ -46,7 +46,7 @@
 					
 					<void />
 					<value id="velw_1" />
-					<value id="veld_1" />
+					<value id="veld_1" visibility=":velt_1 ieq 2"/>
 					<void />
 					<value id="velc_1" />
 				</grid>
@@ -54,12 +54,12 @@
 			</vbox>
 		</group>
 		
-		<group text="Color" ipdadding="0" fill="true">
+		<group text="labels.noise_generator.color" ipdadding="0" fill="true">
 			<grid rows="3" cols="4" bg.color="bg_schema">
-				<label text="Color"/>
-				<label text="Slope" visibility=":cols_1 ieq 5"/>
-				<label text="Slope" visibility=":cols_1 ieq 6"/>
-				<label text="Slope" visibility=":cols_1 ieq 7"/>
+				<label text="labels.noise_generator.color"/>
+				<label text="labels.noise_generator.slope_npn" visibility=":cols_1 ieq 5"/>
+				<label text="labels.noise_generator.slope_dbo" visibility=":cols_1 ieq 6"/>
+				<label text="labels.noise_generator.slope_dbd" visibility=":cols_1 ieq 7"/>
 				
 				<combo id="cols_1" />
 				<knob id="csnpn_1" visibility=":cols_1 ieq 5"/>

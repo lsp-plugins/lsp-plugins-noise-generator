@@ -89,7 +89,6 @@ namespace lsp
 				{
 					size_t 				nUpdate;
 					ch_state_stage_t 	sStateStage;
-					bool 				bUseGlobal;
 					bool 				bActive;
 					bool 				bInaudible;
 					bool                bForceAudible;  // Use if the sample rate does not allow actual inaudible noise
@@ -149,7 +148,6 @@ namespace lsp
                     plug::IPort 			*pAmplitude; 		// Noise Amplitude
                     plug::IPort 			*pOffset; 			// Noise Offset
                     plug::IPort 			*pInaSw; 			// Make-Inaudible-Switch
-                    plug::IPort        		*pGlSw;        		// Global Switch
                     plug::IPort        		*pSlSw;        		// Solo Switch
                     plug::IPort        		*pMtSw;        		// Mute Switch
 
@@ -159,27 +157,6 @@ namespace lsp
                 size_t         			nChannels;          // Number of channels
                 channel_t          		*vChannels;          // Delay channels
                 float              		*vBuffer;            // Temporary buffer for audio processing
-
-                // Channel Selector
-                plug::IPort 			*pChSel;
-
-                // Global Ports
-                plug::IPort 			*pLCGdist; 			// LCG Distribution
-                plug::IPort				*pVelvetType; 		// Velvet Type
-                plug::IPort 			*pVelvetWin; 		// Velvet Window
-                plug::IPort 			*pVelvetARNd; 		// Velvet ARN Delta
-                plug::IPort 			*pVelvetCSW; 		// Velvet Crushing Switch
-                plug::IPort 			*pVelvetCpr; 		// Velvet Crushing Probability
-                plug::IPort 			*pColorSel; 		// Colour Selector
-                plug::IPort 			*pCslopeNPN; 		// Colour Slope [Neper-per-Neper]
-                plug::IPort 			*pCslopeDBO; 		// Colour Slope [dB-per-Octave]
-                plug::IPort 			*pCslopeDBD; 		// Colour Slope [dB-per-Decade]
-                plug::IPort 			*pNoiseType; 		// Noise Type Selector
-                plug::IPort 			*pNoiseMode; 		// Noise Mode Selector
-                plug::IPort 			*pAmplitude; 		// Noise Amplitude
-                plug::IPort 			*pOffset; 			// Noise Offset
-                plug::IPort 			*pInaSw; 			// Make-Inaudible-Switch
-
                 uint8_t            		*pData;              // Allocated data
 
             public:

@@ -1,0 +1,7 @@
+{
+	"noise_generator": {
+		"name": "Noise Generator",
+		"description": "Un flessibile generatore di rumnore che supporta diversi algoritmi, colori, e rumore inudibile."
+	}
+}
+

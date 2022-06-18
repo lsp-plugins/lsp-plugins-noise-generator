@@ -90,31 +90,11 @@ namespace lsp
             {NULL,          					NULL}
         };
 
-        static const port_item_t ng_channels_x2[] =
-        {
-            {"1",           NULL },
-            {"2",           NULL },
-            {NULL,          NULL}
-        };
-
-        static const port_item_t ng_channels_x4[] =
-        {
-            {"1",           NULL },
-            {"2",           NULL },
-            {"3",           NULL },
-            {"4",           NULL },
-            {NULL,          NULL}
-        };
-
-		#define CHANNEL_SELECTOR(ng_channels) \
-			COMBO("ng_cs", "Noise Generator Channel Selector", 0, ng_channels)
-
 		#define CHANNEL_AUDIO_PORTS(id, label) \
 			AUDIO_INPUT("in" id, "Input" label), \
 			AUDIO_OUTPUT("out" id, "Output" label)
 
 		#define CHANNEL_SWITCHES(id, label) \
-			SWITCH("glsw" id, "Global Switch" label, 0.0f), \
 			SWITCH("chsl" id, "Solo Switch" label, 0.0f), \
 			SWITCH("chmt" id, "Mute Switch" label, 0.0f)
 
@@ -160,9 +140,6 @@ namespace lsp
         	CHANNEL_AUDIO_PORTS("_1", " 1"),
 			CHANNEL_AUDIO_PORTS("_2", " 2"),
 
-            CHANNEL_SELECTOR(ng_channels_x2),
-
-            CHANNEL_CONTROLS("", " Global"),
             CHANNEL_CONTROLS("_1", " 1"),
             CHANNEL_CONTROLS("_2", " 2"),
 
@@ -179,9 +156,6 @@ namespace lsp
         	CHANNEL_AUDIO_PORTS("_3", " 3"),
 			CHANNEL_AUDIO_PORTS("_4", " 4"),
 
-            CHANNEL_SELECTOR(ng_channels_x4),
-
-            CHANNEL_CONTROLS("", " Global"),
             CHANNEL_CONTROLS("_1", " 1"),
             CHANNEL_CONTROLS("_2", " 2"),
             CHANNEL_CONTROLS("_3", " 3"),

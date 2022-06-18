@@ -71,25 +71,6 @@ namespace lsp
             // Initialize other parameters
             vChannels       = NULL;
             vBuffer         = NULL;
-
-            pChSel          = NULL;
-
-            pLCGdist        = NULL;
-            pVelvetType 	= NULL;
-			pVelvetWin 		= NULL;
-			pVelvetARNd		= NULL;
-			pVelvetCSW		= NULL;
-			pVelvetCpr		= NULL;
-			pColorSel		= NULL;
-			pCslopeNPN		= NULL;
-			pCslopeDBO		= NULL;
-			pCslopeDBD		= NULL;
-			pNoiseType		= NULL;
-			pNoiseMode		= NULL;
-			pAmplitude		= NULL;
-			pOffset			= NULL;
-			pInaSw			= NULL;
-
             pData           = NULL;
         }
 
@@ -235,7 +216,6 @@ namespace lsp
         	c->sChUpd.sStateStage.fPV_pOffset = meta::noise_generator_metadata::NOISE_OFFSET_DFL;
         	c->sChUpd.nUpdate |= UPD_NOISE_OFFSET;
 
-        	c->sChUpd.bUseGlobal = false;
         	c->sChUpd.bActive = false;
         	c->sChUpd.bInaudible = false;
         }
@@ -434,7 +414,6 @@ namespace lsp
 				c->pAmplitude			= NULL;
 				c->pOffset				= NULL;
 				c->pInaSw				= NULL;
-				c->pGlSw                = NULL;
 				c->pSlSw                = NULL;
 				c->pMtSw                = NULL;
 
@@ -455,54 +434,6 @@ namespace lsp
 
                 TRACE_PORT(ports[port_id]);
                 vChannels[i].pOut   = ports[port_id++];
-            }
-
-            // Channel selector only exists on multi-channel versions. Skip for 1X plugin.
-            if (nChannels > 1)
-            {
-            	lsp_trace("Binding channel selector port");
-                TRACE_PORT(ports[port_id]);
-                pChSel 				= ports[port_id++];
-            }
-
-            // Global ports only exists on multi-channel versions. Skip for 1X plugin.
-            if (nChannels > 1)
-            {
-            	lsp_trace("Binding global control ports");
-
-                TRACE_PORT(ports[port_id]);
-                pLCGdist 			= ports[port_id++];
-
-                TRACE_PORT(ports[port_id]);
-                pVelvetType 		= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pVelvetWin 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pVelvetARNd 		= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pVelvetCSW 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pVelvetCpr 			= ports[port_id++];
-
-                TRACE_PORT(ports[port_id]);
-                pColorSel 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pCslopeNPN 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pCslopeDBO 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pCslopeDBD 			= ports[port_id++];
-
-                TRACE_PORT(ports[port_id]);
-                pNoiseType 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pNoiseMode 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pAmplitude 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pOffset 			= ports[port_id++];
-                TRACE_PORT(ports[port_id]);
-                pInaSw 				= ports[port_id++];
             }
 
             lsp_trace("Binding channel control ports");
@@ -550,8 +481,6 @@ namespace lsp
 				lsp_trace("Binding channel switches ports");
 				for (size_t i=0; i<nChannels; ++i)
 				{
-					TRACE_PORT(ports[port_id]);
-					vChannels[i].pGlSw		= ports[port_id++];
 					TRACE_PORT(ports[port_id]);
 					vChannels[i].pSlSw 		= ports[port_id++];
 					TRACE_PORT(ports[port_id]);
@@ -622,59 +551,55 @@ namespace lsp
         	{
         		channel_t *c = &vChannels[i];
 
-        		// Global controls only actually exist for mult-channel plugins. Do not use for 1X.
-				if (nChannels > 1)
-					c->sChUpd.bUseGlobal = c->pGlSw->value() >= 0.5f;
-
 				// If one of the channels is solo, then we simply know from the solo switch if this channel
 				// is active. Otherwise, we check whether the channel was set to mute or not.
                 bool solo       	= (c->pSlSw != NULL) ? c->pSlSw->value() >= 0.5f : false;
                 bool mute       	= (c->pMtSw != NULL) ? c->pMtSw->value() >= 0.5f : false;
                 c->sChUpd.bActive	= (has_solo) ? solo : !mute;
 
-                size_t lcgdist = (c->sChUpd.bUseGlobal) ? pLCGdist->value() : c->pLCGdist->value();
+                size_t lcgdist = c->pLCGdist->value();
                 if (lcgdist != c->sChUpd.sStateStage.nPV_pLCGdist)
                 {
                 	c->sChUpd.sStateStage.nPV_pLCGdist = lcgdist;
                 	c->sChUpd.nUpdate |= UPD_LCG_DIST;
                 }
 
-                size_t velvettype = (c->sChUpd.bUseGlobal) ? pVelvetType->value() : c->pVelvetType->value();
+                size_t velvettype = c->pVelvetType->value();
                 if (velvettype != c->sChUpd.sStateStage.nPV_pVelvetType)
                 {
                 	c->sChUpd.sStateStage.nPV_pVelvetType = velvettype;
                 	c->sChUpd.nUpdate |= UPD_VELVET_TYPE;
                 }
 
-                float velvetwin = (c->sChUpd.bUseGlobal) ? pVelvetWin->value() : c->pVelvetWin->value();
+                float velvetwin = c->pVelvetWin->value();
                 if (velvetwin != c->sChUpd.sStateStage.fPV_pVelvetWin)
                 {
                 	c->sChUpd.sStateStage.fPV_pVelvetWin = velvetwin;
                 	c->sChUpd.nUpdate |= UPD_VELVET_WIN;
                 }
 
-                float velvetarnd = (c->sChUpd.bUseGlobal) ? pVelvetARNd->value() : c->pVelvetARNd->value();
+                float velvetarnd = c->pVelvetARNd->value();
                 if (velvetarnd != c->sChUpd.sStateStage.fPV_pVelvetARNd)
                 {
                 	c->sChUpd.sStateStage.fPV_pVelvetARNd = velvetarnd;
                 	c->sChUpd.nUpdate |= UPD_VELVET_ARN_D;
                 }
 
-                bool velvetcs = (c->sChUpd.bUseGlobal) ? pVelvetCSW->value() >= 0.5f : c->pVelvetCSW->value() >= 0.5f;
+                bool velvetcs = c->pVelvetCSW->value() >= 0.5f;
                 if (velvetcs != c->sChUpd.sStateStage.bPV_pVelvetCSW)
                 {
                 	c->sChUpd.sStateStage.bPV_pVelvetCSW = velvetcs;
                 	c->sChUpd.nUpdate |= UPD_VELVET_CRUSH;
                 }
 
-                float velvetcsp = (c->sChUpd.bUseGlobal) ? pVelvetCpr->value() : c->pVelvetCpr->value();
+                float velvetcsp = c->pVelvetCpr->value();
                 if (velvetcsp != c->sChUpd.sStateStage.fPV_pVelvetCpr)
                 {
                 	c->sChUpd.sStateStage.fPV_pVelvetCpr = velvetcsp;
                 	c->sChUpd.nUpdate |= UPD_VELVET_CRUSH_P;
                 }
 
-                size_t color = (c->sChUpd.bUseGlobal) ? pColorSel->value() : c->pColorSel->value();
+                size_t color = c->pColorSel->value();
                 if (color != c->sChUpd.sStateStage.nPV_pColorSel)
                 {
                 	c->sChUpd.sStateStage.nPV_pColorSel = color;
@@ -683,49 +608,49 @@ namespace lsp
 
                 float colorslope;
                 // NPN
-                colorslope = (c->sChUpd.bUseGlobal) ? pCslopeNPN->value() : c->pCslopeNPN->value();
+                colorslope = c->pCslopeNPN->value();
                 if (colorslope != c->sChUpd.sStateStage.fPV_pCslopeNPN)
                 {
                 	c->sChUpd.sStateStage.fPV_pCslopeNPN = colorslope;
                 	c->sChUpd.nUpdate |= UPD_COLOR_SLOPE;
                 }
                 // DBO
-                colorslope = (c->sChUpd.bUseGlobal) ? pCslopeDBO->value() : c->pCslopeDBO->value();
+                colorslope = c->pCslopeDBO->value();
                 if (colorslope != c->sChUpd.sStateStage.fPV_pCslopeDBO)
                 {
                 	c->sChUpd.sStateStage.fPV_pCslopeDBO = colorslope;
                 	c->sChUpd.nUpdate |= UPD_COLOR_SLOPE;
                 }
                 // DBD
-                colorslope = (c->sChUpd.bUseGlobal) ? pCslopeDBD->value() : c->pCslopeDBD->value();
+                colorslope = c->pCslopeDBD->value();
                 if (colorslope != c->sChUpd.sStateStage.fPV_pCslopeDBD)
                 {
                 	c->sChUpd.sStateStage.fPV_pCslopeDBD = colorslope;
                 	c->sChUpd.nUpdate |= UPD_COLOR_SLOPE;
                 }
 
-                size_t noisetype = (c->sChUpd.bUseGlobal) ? pNoiseType->value() : c->pNoiseType->value();
+                size_t noisetype = c->pNoiseType->value();
                 if (noisetype != c->sChUpd.sStateStage.nPV_pNoiseType)
                 {
                 	c->sChUpd.sStateStage.nPV_pNoiseType = noisetype;
                 	c->sChUpd.nUpdate |= UPD_NOISE_TYPE;
                 }
 
-                size_t noisemode = (c->sChUpd.bUseGlobal) ? pNoiseMode->value() : c->pNoiseMode->value();
+                size_t noisemode = c->pNoiseMode->value();
                 if (noisemode != c->sChUpd.sStateStage.nPV_pNoiseMode)
                 {
                 	c->sChUpd.sStateStage.nPV_pNoiseMode = noisemode;
                 	c->sChUpd.nUpdate |= UPD_NOISE_MODE;
                 }
 
-                float amp = (c->sChUpd.bUseGlobal) ? pAmplitude->value() : c->pAmplitude->value();
+                float amp = c->pAmplitude->value();
                 if (amp != c->sChUpd.sStateStage.fPV_pAmplitude)
                 {
                 	c->sChUpd.sStateStage.fPV_pAmplitude = amp;
                 	c->sChUpd.nUpdate |= UPD_NOISE_AMPLITUDE;
                 }
 
-                float off = (c->sChUpd.bUseGlobal) ? pOffset->value() : c->pOffset->value();
+                float off = c->pOffset->value();
                 if (off != c->sChUpd.sStateStage.fPV_pOffset)
                 {
                 	c->sChUpd.sStateStage.fPV_pOffset = off;
@@ -736,7 +661,7 @@ namespace lsp
                     c->sChUpd.bInaudible = false;
                 else
                 {
-                    bool ina = (c->sChUpd.bUseGlobal) ? pInaSw->value() >= 0.5f : c->pInaSw->value() >= 0.5f;
+                    bool ina = c->pInaSw->value() >= 0.5f;
                     // If inaudible changed we want to ensure the colour, that while inaudible was forced white, gets reset to user specifications.
                     if (ina != c->sChUpd.bInaudible)
                     {
@@ -874,7 +799,6 @@ namespace lsp
                             v->write("fPV_pOffset", &c->sChUpd.sStateStage.fPV_pOffset);
                         }
 
-                        v->write("bUseGlobal", &c->sChUpd.bUseGlobal);
                         v->write("bActive", &c->sChUpd.bActive);
                         v->write("bInaudible", &c->sChUpd.bInaudible);
                     }
@@ -914,7 +838,6 @@ namespace lsp
                     v->write("pAmplitude", &c->pAmplitude);
                     v->write("pOffset", &c->pOffset);
                     v->write("pInaSw", &c->pInaSw);
-                    v->write("pGlSw", &c->pGlSw);
                     v->write("pSlSw", &c->pSlSw);
                     v->write("pMtSw", &c->pMtSw);
                 }
@@ -923,25 +846,6 @@ namespace lsp
             v->end_array();
 
             v->write("vBuffer", vBuffer);
-
-            v->write("pChSel", pChSel);
-
-            v->write("pLCGdist", pLCGdist);
-            v->write("pVelvetType", pVelvetType);
-            v->write("pVelvetWin", pVelvetWin);
-            v->write("pVelvetARNd", pVelvetARNd);
-            v->write("pVelvetCSW", pVelvetCSW);
-            v->write("pVelvetCpr", pVelvetCpr);
-            v->write("pColorSel", pColorSel);
-            v->write("pCslopeNPN", pCslopeNPN);
-            v->write("pCslopeDBO", pCslopeDBO);
-            v->write("pCslopeDBD", pCslopeDBD);
-            v->write("pNoiseType", pNoiseType);
-            v->write("pNoiseMode", pNoiseMode);
-            v->write("pAmplitude", pAmplitude);
-            v->write("pOffset", pOffset);
-            v->write("pInaSw", pInaSw);
-
             v->write("pData", pData);
         }
 
