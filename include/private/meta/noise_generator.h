@@ -53,20 +53,20 @@ namespace lsp
 				NOISE_VELVET_DFL = NOISE_VELVET_OVN
 			};
 
-            static const float  VELVET_WINDOW_DURATION_MIN	= 0.0f;
-            static const float  VELVET_WINDOW_DURATION_MAX  = 0.1f;
-            static const float  VELVET_WINDOW_DURATION_DFL 	= 0.0f;
-            static const float  VELVET_WINDOW_DURATION_STEP	= 1.0e-3f;
+            static constexpr float  VELVET_WINDOW_DURATION_MIN	= 0.0f;
+            static constexpr float  VELVET_WINDOW_DURATION_MAX  = 0.1f;
+            static constexpr float  VELVET_WINDOW_DURATION_DFL 	= 0.0f;
+            static constexpr float  VELVET_WINDOW_DURATION_STEP	= 1.0e-3f;
 
-            static const float  VELVET_ARN_DELTA_MIN		= 0.0f;
-            static const float  VELVET_ARN_DELTA_MAX  		= 1.0f;
-            static const float  VELVET_ARN_DELTA_DFL 		= 0.5f;
-            static const float  VELVET_ARN_DELTA_STEP		= 1.0e-3f;
+            static constexpr float  VELVET_ARN_DELTA_MIN		= 0.0f;
+            static constexpr float  VELVET_ARN_DELTA_MAX  		= 1.0f;
+            static constexpr float  VELVET_ARN_DELTA_DFL 		= 0.5f;
+            static constexpr float  VELVET_ARN_DELTA_STEP		= 1.0e-3f;
 
-            static const float  VELVET_CRUSH_PROB_MIN		= 0.0f;
-            static const float  VELVET_CRUSH_PROB_MAX  		= 100.0f;
-            static const float  VELVET_CRUSH_PROB_DFL 		= 50.0f;
-            static const float  VELVET_CRUSH_PROB_STEP		= 1.0e-2f;
+            static constexpr float  VELVET_CRUSH_PROB_MIN		= 0.0f;
+            static constexpr float  VELVET_CRUSH_PROB_MAX  		= 100.0f;
+            static constexpr float  VELVET_CRUSH_PROB_DFL 		= 50.0f;
+            static constexpr float  VELVET_CRUSH_PROB_STEP		= 1.0e-2f;
 
         	enum noise_type_selector_t
 			{
@@ -91,27 +91,27 @@ namespace lsp
 				NOISE_COLOR_DFL = NOISE_COLOR_WHITE
 			};
 
-            static const float  NOISE_COLOR_SLOPE_NPN_MIN	= -3.0f;
-            static const float  NOISE_COLOR_SLOPE_NPN_MAX	= 3.0f;
-            static const float  NOISE_COLOR_SLOPE_NPN_DFL 	= -0.5f;  // Pink
-            static const float  NOISE_COLOR_SLOPE_NPN_STEP	= 1.0e-3f;
+            static constexpr float  NOISE_COLOR_SLOPE_NPN_MIN	= -3.0f;
+            static constexpr float  NOISE_COLOR_SLOPE_NPN_MAX	= 3.0f;
+            static constexpr float  NOISE_COLOR_SLOPE_NPN_DFL 	= -0.5f;  // Pink
+            static constexpr float  NOISE_COLOR_SLOPE_NPN_STEP	= 1.0e-3f;
 
-            static const float  NOISE_COLOR_SLOPE_DBO_MIN	= -18.0f;
-            static const float  NOISE_COLOR_SLOPE_DBO_MAX	= 18.0f;
-            static const float  NOISE_COLOR_SLOPE_DBO_DFL 	= -3.01f;  // Pink
-            static const float  NOISE_COLOR_SLOPE_DBO_STEP	= 0.1f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBO_MIN	= -18.0f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBO_MAX	= 18.0f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBO_DFL 	= -3.01f;  // Pink
+            static constexpr float  NOISE_COLOR_SLOPE_DBO_STEP	= 0.1f;
 
-            static const float  NOISE_COLOR_SLOPE_DBD_MIN	= -60.0f;
-            static const float  NOISE_COLOR_SLOPE_DBD_MAX	= 60.0f;
-            static const float  NOISE_COLOR_SLOPE_DBD_DFL 	= -10.0f;  // Pink
-            static const float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBD_MIN	= -60.0f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBD_MAX	= 60.0f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBD_DFL 	= -10.0f;  // Pink
+            static constexpr float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
 
-            static const float  NOISE_AMPLITUDE_DFL			= 1.0f;
+            static constexpr float  NOISE_AMPLITUDE_DFL			= 1.0f;
 
-            static const float  NOISE_OFFSET_MIN			= -10.0f;
-            static const float  NOISE_OFFSET_MAX  			= 10.0f;
-            static const float  NOISE_OFFSET_DFL 			= 0.0f;
-            static const float  NOISE_OFFSET_STEP			= 0.1f;
+            static constexpr float  NOISE_OFFSET_MIN			= -10.0f;
+            static constexpr float  NOISE_OFFSET_MAX  			= 10.0f;
+            static constexpr float  NOISE_OFFSET_DFL 			= 0.0f;
+            static constexpr float  NOISE_OFFSET_STEP			= 0.1f;
 
         	enum noise_mode_selector_t
 			{
