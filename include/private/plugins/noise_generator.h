@@ -26,6 +26,7 @@
 #include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
 #include <lsp-plug.in/plug-fw/plug.h>
 #include <private/meta/noise_generator.h>
+#include <lsp-plug.in/plug-fw/core/IDBuffer.h>
 
 namespace lsp
 {
@@ -72,6 +73,11 @@ namespace lsp
                     plug::IPort        		*pIn;         		// Input port
                     plug::IPort        		*pOut;              // Output port
 
+                    // Buffers
+                    float                   *vIDisplay_x;       // Inline Display, X
+                    float                   *vIDisplay_y;       // Inline Display, Y
+                    size_t                  nIDisplay;          // Actual number of samples in Inline Display, after decimation.
+
                     // Input ports
                     plug::IPort 			*pLCGdist; 			// LCG Distribution
                     plug::IPort				*pVelvetType; 		// Velvet Type
@@ -88,16 +94,22 @@ namespace lsp
                     plug::IPort 			*pAmplitude; 		// Noise Amplitude
                     plug::IPort 			*pOffset; 			// Noise Offset
                     plug::IPort 			*pInaSw; 			// Make-Inaudible-Switch
+                    plug::IPort             *pMsh;              // Mesh for Filter Frequency Chart Plot
                     plug::IPort        		*pSlSw;        		// Solo Switch
                     plug::IPort        		*pMtSw;        		// Mute Switch
 
                 } channel_t;
 
             protected:
-                size_t         			nChannels;          // Number of channels
-                channel_t          		*vChannels;          // Delay channels
-                float              		*vBuffer;            // Temporary buffer for audio processing
-                uint8_t            		*pData;              // Allocated data
+                size_t         			nChannels;              // Number of channels
+                channel_t          		*vChannels;             // Noise Generator channels
+                float              		*vBuffer;               // Temporary buffer for audio processing
+                float                   *vFreqs;                // Frequency list
+                float                   *vChrtRe;               // Temporary buffer for real part of frequency chart
+                float                   *vChrtIm;               // Temporary buffer for imaginary part of frequency chart
+                size_t                  nFreqs;                 // Number of Frequencies in the List
+                uint8_t            		*pData;                 // Allocated data
+                core::IDBuffer          *pIDisplay;             // Inline display buffer
 
             public:
                 explicit noise_generator(const meta::plugin_t *meta);
@@ -110,6 +122,7 @@ namespace lsp
                 virtual void        update_sample_rate(long sr);
                 virtual void        update_settings();
                 virtual void        process(size_t samples);
+                virtual bool        inline_display(plug::ICanvas *cv, size_t width, size_t height);
                 virtual void        dump(dspu::IStateDumper *v) const;
 
             protected:

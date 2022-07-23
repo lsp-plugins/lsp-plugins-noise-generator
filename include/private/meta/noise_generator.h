@@ -106,6 +106,8 @@ namespace lsp
             static const float  NOISE_COLOR_SLOPE_DBD_DFL 	= -10.0f;  // Pink
             static const float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
 
+            static const size_t MESH_POINTS                 = 640;
+
             static const float  NOISE_AMPLITUDE_DFL			= 1.0f;
 
             static const float  NOISE_OFFSET_MIN			= -10.0f;

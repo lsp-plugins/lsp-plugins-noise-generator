@@ -2,6 +2,15 @@
 	<vbox spacing="4">
 	
 		<group text="labels.noise_generator.general" ipdadding="0" fill="true">
+			<graph width.min="432" height.min="96" expand="true" fill="true">
+				<origin hpos="-1" vpos="-1" visible="false"/>
+				<mesh id="msh_1" width="3"/>
+				<axis min="10" max="24000" angle="0.0" log="true" visibility="false"/>
+				<axis min="-60 db / :zoom" max="60 db / :zoom" angle="0.5" log="true" visibility="false"/>				
+			</graph>
+		</group>
+	
+		<group text="labels.noise_generator.general" ipdadding="0" fill="true">
 			<grid rows="3" cols="5" bg.color="bg_schema">
 				<label text="labels.noise_generator.N_type"/>
 				<label text="labels.noise_generator.N_mode"/>

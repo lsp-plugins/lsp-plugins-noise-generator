@@ -121,11 +121,15 @@ namespace lsp
 			CONTROL("nso" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
 			SWITCH("inas" id, "Make Inaudible Switch", 0.0f)
 
+        #define VISUAL_OUTS(id, label) \
+            MESH("msh" id, "Filter Curve Display", 2, noise_generator::MESH_POINTS)
+
 		#define CHANNEL_CONTROLS(id, label) \
 			LCG_CONTROLS(id, label), \
 			VELVET_CONTROLS(id, label), \
 			COLOR_CONTROLS(id, label), \
-			NOISE_CONTROLS(id, label)
+			NOISE_CONTROLS(id, label), \
+			VISUAL_OUTS(id, label)
 
     	static const port_t noise_generator_x1_ports[] =
         {
