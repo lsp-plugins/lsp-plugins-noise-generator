@@ -35,7 +35,7 @@
 #define INA_FILTER_CUTOFF	        22050.0f
 #define INA_ATTENUATION             0.5f // We attenuate the noise before filtering to make it inaudible. This to prevent sharp transients from still being audible.
 #define COLOR_FILTER_ORDER          32
-#define IDISPLAY_DECIM              370.0f
+#define IDISPLAY_BUF_SIZE           64u  // Number of samples in frequency chart for Inline Display
 
 namespace lsp
 {
@@ -462,6 +462,9 @@ namespace lsp
                 c->sNoiseGenerator.set_generator(noise_type);
                 c->sNoiseGenerator.set_amplitude(c->pAmplitude->value());
                 c->sNoiseGenerator.set_offset(c->pOffset->value());
+
+                // Plots only really need update when we operate the controls, se we set the update to true
+                c->bUpdPlots = true;
         	}
         }
 
@@ -538,7 +541,11 @@ namespace lsp
                     dsp::fill_zero(out, samples);
                 }
 
-                // Make a Frequency Chart - It only needs to be updated when the settings change.
+                // Make a Frequency Chart - It only needs to be updated when the settings changed. so if bUpdPlots is true.
+                // We do the chart after processing so that we chart the most up to date filter state.
+                if (!c->bUpdPlots)
+                    continue;
+
                 plug::mesh_t *mesh = c->pMsh->buffer<plug::mesh_t>();
                 if ((mesh != NULL) && (mesh->isEmpty()))
                 {
@@ -546,35 +553,26 @@ namespace lsp
                     {
                         dsp::copy(mesh->pvData[0], vFreqs, nFreqs);
                         c->sNoiseGenerator.freq_chart(vChrtRe, vChrtIm, vFreqs, nFreqs);
-                        for (size_t k = 0; k < nFreqs; ++k)
-                        {
-//                            mesh->pvData[1][k] = 20.0f * log10f(sqrtf(vChrtRe[k] * vChrtRe[k] + vChrtIm[k] * vChrtIm[k])); // Convert to dB
-                            mesh->pvData[1][k] = sqrtf(vChrtRe[k] * vChrtRe[k] + vChrtIm[k] * vChrtIm[k]);
-                        }
-
+                        dsp::complex_mod(mesh->pvData[1], vChrtRe, vChrtIm, nFreqs);
                         mesh->data(2, nFreqs);
 
                         // Filling Inline Display Buffers by decimating main plot buffers
-                        size_t j = 0;
-                        for (size_t i = j+1; i < nFreqs; ++i)
+                        c->nIDisplay = lsp_min(IDISPLAY_BUF_SIZE, nFreqs);
+                        size_t step = nFreqs / c->nIDisplay;
+                        size_t head = 0;
+                        for (size_t i = 0; i < c->nIDisplay; ++i)
                         {
-                            float dx    = mesh->pvData[0][i] - mesh->pvData[0][j];
-                            float dy    = mesh->pvData[1][i] - mesh->pvData[1][j];
-                            float s     = dx*dx + dy*dy;
-
-                            if (s < IDISPLAY_DECIM) // Skip point
-                                continue;
-
-                            // Add point to decimated array
-                            ++j;
-                            c->vIDisplay_x[j] = mesh->pvData[0][i];
-                            c->vIDisplay_y[j] = mesh->pvData[1][i];
+                            c->vIDisplay_x[i] = mesh->pvData[0][head];
+                            c->vIDisplay_y[i] = mesh->pvData[1][head];
+                            head += step;
                         }
 
                     }
                     else
                         mesh->data(2, 0);
                 }
+
+                c->bUpdPlots = false;
             }
         }
 
@@ -625,8 +623,8 @@ namespace lsp
                     (nChannels < 4) ? &ch_colors[1] :
                     &ch_colors[3];
 
-            float halfv = 0.5f * width;
-            float halfh = 0.5f * height;
+//            float halfv = 0.5f * width;
+//            float halfh = 0.5f * height;
 
             // Estimate the display length
             size_t di_length = 1;
@@ -647,11 +645,20 @@ namespace lsp
                 if (!c->bActive)
                     continue;
 
+                // We scale the contents so that they fill the width and height span:
+                // X: Min to Max => 0 to Width
+                // Y: Min to Max => 0 to Height
+                float max_x = dsp::max(c->vIDisplay_x, c->nIDisplay);
+                float min_x = dsp::min(c->vIDisplay_x, c->nIDisplay);
+                float range_x = max_x - min_x;
+                float max_y = dsp::max(c->vIDisplay_y, c->nIDisplay);
+                float min_y = dsp::min(c->vIDisplay_y, c->nIDisplay);
+                float range_y = max_y - min_y;
                 size_t dlen = lsp_min(c->nIDisplay, di_length);
                 for (size_t i=0; i<dlen; ++i)
                 {
-                    b->v[0][i] = halfv * (c->vIDisplay_x[i] + 1.0f);
-                    b->v[1][i] = halfh * (-c->vIDisplay_y[i] + 1.0f);
+                    b->v[0][i] = width * c->vIDisplay_x[i] / range_x - width * min_x / range_x;
+                    b->v[1][i] = height * c->vIDisplay_y[i] / range_y - height * min_y / range_y;
                 }
 
                 // Set color and draw
@@ -684,6 +691,7 @@ namespace lsp
                     v->write("bActive", c->bActive);
                     v->write("bInaudible", c->bInaudible);
                     v->write("bForceAudible", c->bForceAudible);
+                    v->write("bUpdPlots",c->bUpdPlots);
 
                     v->write("pIn", c->pIn);
                     v->write("pOut", c->pOut);

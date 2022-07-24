@@ -68,6 +68,7 @@ namespace lsp
                     bool                    bActive;
                     bool                    bInaudible;
                     bool                    bForceAudible;      // Use if the sample rate does not allow actual inaudible noise
+                    bool                    bUpdPlots;          // Whehter to update the plots
 
                     // Audio Ports
                     plug::IPort        		*pIn;         		// Input port
