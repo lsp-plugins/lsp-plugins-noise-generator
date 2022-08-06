@@ -345,19 +345,6 @@ namespace lsp
 
         void noise_generator::destroy()
         {
-            // Forget about buffers
-            vBuffer     = NULL;
-            vTemp       = NULL;
-            vFreqs      = NULL;
-            vFreqChart  = NULL;
-
-            // Free previously allocated data chunk
-            if (pData != NULL)
-            {
-                free_aligned(pData);
-                pData       = NULL;
-            }
-
             // Drop inline display data structures
             if (pIDisplay != NULL)
             {
@@ -373,8 +360,23 @@ namespace lsp
                     channel_t *c    = &vChannels[i];
                     c->vFreqChart   = NULL;
                     c->sNoiseGenerator.destroy();
+                    c->sAudibleStop.destroy();
+                    c->sBypass.destroy();
                 }
                 vChannels = NULL;
+            }
+
+            // Forget about buffers
+            vBuffer     = NULL;
+            vTemp       = NULL;
+            vFreqs      = NULL;
+            vFreqChart  = NULL;
+
+            // Free previously allocated data chunk
+            if (pData != NULL)
+            {
+                free_aligned(pData);
+                pData       = NULL;
             }
 
             // Destroy parent module
