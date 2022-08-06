@@ -27,12 +27,13 @@
 #include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/shared/id_colors.h>
 
+#include <private/meta/noise_generator.h>
 #include <private/plugins/noise_generator.h>
 
 /* The size of temporary buffer for audio processing */
 #define BUFFER_SIZE                 0x1000U
-#define INA_FILTER_ORD 		        64
-#define INA_FILTER_CUTOFF	        22050.0f
+#define INA_FILTER_ORD              64
+#define INA_FILTER_CUTOFF           (DEFAULT_SAMPLE_RATE * 0.5f)
 #define INA_ATTENUATION             0.5f // We attenuate the noise before filtering to make it inaudible. This to prevent sharp transients from still being audible.
 #define COLOR_FILTER_ORDER          32
 #define IDISPLAY_BUF_SIZE           64u  // Number of samples in frequency chart for Inline Display
@@ -77,12 +78,13 @@ namespace lsp
             // Initialize other parameters
             vChannels       = NULL;
             vBuffer         = NULL;
+            vTemp           = NULL;
             vFreqs          = NULL;
-            vChrtRe         = NULL;
-            vChrtIm         = NULL;
-            nFreqs          = 0;
+            vFreqChart      = NULL;
             pData           = NULL;
             pIDisplay       = NULL;
+
+            pBypass         = NULL;
         }
 
         noise_generator::~noise_generator()
@@ -202,17 +204,14 @@ namespace lsp
             size_t szof_channels    = align_size(sizeof(channel_t) * nChannels, OPTIMAL_ALIGN);
 
             /** Buffers:
-             * 1X Temporary Buffer for Processing (BUFFER_SIZE)
+             * 2X Temporary Buffer for Processing (BUFFER_SIZE)
              * 1X Frequency List (MESH_POINTS)
-             * 1X Real Part of Frequency Response (MESH_POINTS)
-             * 1X Imaginary Part of Frequency Response (MESH_POINTS)
-             * nChannelsX Data for Inline Display (X) (MESH_POINTS)
-             * nChannelsX Data for Inline Display (Y) (MESH_POINTS)
+             * 1X Complex Part of Frequency Response (MESH_POINTS)
+             * 1X Frequency Chart of Channel (MESH_POINTS)
              */
-            nFreqs                  = meta::noise_generator::MESH_POINTS;
             size_t buf_sz           = BUFFER_SIZE * sizeof(float);
-            size_t chr_sz           = nFreqs *  sizeof(float);
-            size_t alloc            = szof_channels + buf_sz + 3u * chr_sz + 2u * nChannels * chr_sz;
+            size_t chr_sz           = meta::noise_generator::MESH_POINTS *  sizeof(float);
+            size_t alloc            = szof_channels + 2*buf_sz + 3*chr_sz + nChannels * chr_sz;
 
             // Allocate memory-aligned data
             uint8_t *ptr            = alloc_aligned<uint8_t>(pData, alloc, OPTIMAL_ALIGN);
@@ -224,20 +223,18 @@ namespace lsp
             ptr                    += szof_channels;
             vBuffer                 = reinterpret_cast<float *>(ptr);
             ptr                    += buf_sz;
+            vTemp                   = reinterpret_cast<float *>(ptr);
+            ptr                    += buf_sz;
             vFreqs                  = reinterpret_cast<float *>(ptr);
             ptr                    += chr_sz;
-            vChrtRe                 = reinterpret_cast<float *>(ptr);
-            ptr                    += chr_sz;
-            vChrtIm                 = reinterpret_cast<float *>(ptr);
-            ptr                    += chr_sz;
+            vFreqChart              = reinterpret_cast<float *>(ptr);
+            ptr                    += chr_sz * 2;
 
             for (size_t i=0; i < nChannels; ++i)
             {
                 channel_t *c = &vChannels[i];
 
-                c->vIDisplay_x      = reinterpret_cast<float *>(ptr);
-                ptr                += chr_sz;
-                c->vIDisplay_y      = reinterpret_cast<float *>(ptr);
+                c->vFreqChart       = reinterpret_cast<float *>(ptr);
                 ptr                += chr_sz;
             }
 
@@ -246,16 +243,16 @@ namespace lsp
                 channel_t *c = &vChannels[i];
 
                 // Construct in-place DSP processors
+                c->sBypass.construct();
                 c->sNoiseGenerator.construct();
                 c->sAudibleStop.construct();
 
                 // We seed every noise generator differently so that they produce uncorrelated noise.
                 // We set the MLS number of bits to -1 so that the initialiser sets it to maximum.
                 c->sNoiseGenerator.init(
-                        -1, make_seed(),
-                        make_seed(),
-                        make_seed(), -1, make_seed()
-                        );
+                    -1, make_seed(),
+                    make_seed(),
+                    make_seed(), -1, make_seed());
 
                 // We also set the inaudible noise filter main properties. These are not user configurable.
                 c->sAudibleStop.set_order(INA_FILTER_ORD);
@@ -269,8 +266,6 @@ namespace lsp
 
                 c->pIn                  = NULL;
                 c->pOut                 = NULL;
-
-                c->nIDisplay            = 0;
 
                 c->pLCGdist             = NULL;
                 c->pVelvetType 			= NULL;
@@ -304,6 +299,11 @@ namespace lsp
                 vChannels[i].pOut           = TRACE_PORT(ports[port_id++]);
             }
 
+            // Bind global ports
+            lsp_trace("Binding global control ports");
+            pBypass                     = TRACE_PORT(ports[port_id++]);
+
+            // Bind channel control ports
             lsp_trace("Binding channel control ports");
             for (size_t i=0; i<nChannels; ++i)
             {
@@ -329,7 +329,6 @@ namespace lsp
                 vChannels[i].pMsh           = TRACE_PORT(ports[port_id++]);
             }
 
-
             // Channel switches only exists on multi-channel versions. Skip for 1X plugin.
             if (nChannels > 1)
             {
@@ -344,10 +343,11 @@ namespace lsp
 
         void noise_generator::destroy()
         {
-            Module::destroy();
-
+            // Forget about buffers
             vBuffer     = NULL;
+            vTemp       = NULL;
             vFreqs      = NULL;
+            vFreqChart  = NULL;
 
             // Free previously allocated data chunk
             if (pData != NULL)
@@ -356,6 +356,7 @@ namespace lsp
                 pData       = NULL;
             }
 
+            // Drop inline display data structures
             if (pIDisplay != NULL)
             {
                 pIDisplay->destroy();
@@ -368,28 +369,32 @@ namespace lsp
                 for (size_t i=0; i<nChannels; ++i)
                 {
                     channel_t *c    = &vChannels[i];
-                    c->vIDisplay_x = NULL;
-                    c->vIDisplay_y = NULL;
+                    c->vFreqChart   = NULL;
                     c->sNoiseGenerator.destroy();
                 }
                 vChannels = NULL;
             }
 
+            // Destroy parent module
+            Module::destroy();
         }
 
         void noise_generator::update_sample_rate(long sr)
         {
-            // We can fill vFreqs: regular grid from 0 to half sample rate (excluded).
-            size_t n_bins = nFreqs * 2u - 1u; // Number of bins of an FFT that would yield n_freqs points
-            for (size_t k = 0; k < nFreqs; ++k)
-                vFreqs[k] = sr * float(k) / n_bins;
+            // Initialize list of frequencies
+            constexpr float min_freq    = meta::noise_generator_metadata::FREQ_MIN;
+            float max_freq              = lsp_min(sr * 0.5f, meta::noise_generator_metadata::FREQ_MAX);
+            float norm                  = logf(max_freq/min_freq) / (meta::noise_generator_metadata::MESH_POINTS - 1);
+            for (size_t i=0; i<meta::noise_generator_metadata::MESH_POINTS; ++i)
+                vFreqs[i]                   = min_freq * expf(i * norm);
 
             // Update sample rate
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c = &vChannels[i];
 
-                c->bForceAudible = (0.5f * sr < INA_FILTER_CUTOFF);
+                c->sBypass.init(sr);
+                c->bForceAudible = (0.5f * sr) < INA_FILTER_CUTOFF;
                 c->sNoiseGenerator.set_sample_rate(sr);
                 c->sAudibleStop.set_sample_rate(sr);
                 c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
@@ -399,12 +404,12 @@ namespace lsp
         void noise_generator::update_settings()
         {
             // Check if one of the channels is solo.
-            bool has_solo = false;
+            bool has_solo   = false;
+            bool bypass     = pBypass->value() >= 0.5f;
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c    = &vChannels[i];
-                bool solo       = (c->pSlSw != NULL) ? c->pSlSw->value() >= 0.5f : false;
-                if (solo)
+                if ((c->pSlSw != NULL) && (c->pSlSw->value() >= 0.5f))
                 {
                     has_solo = true;
                     break;
@@ -414,6 +419,9 @@ namespace lsp
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
+
+                // Update bypass
+                c->sBypass.set_bypass(bypass);
 
                 // If one of the channels is solo, then we simply know from the solo switch if this channel
                 // is active. Otherwise, we check whether the channel was set to mute or not.
@@ -466,6 +474,9 @@ namespace lsp
                 // Plots only really need update when we operate the controls, se we set the update to true
                 c->bUpdPlots = true;
         	}
+
+            // Query inline display redraw
+            pWrapper->query_display_draw();
         }
 
         void noise_generator::process(size_t samples)
@@ -481,64 +492,64 @@ namespace lsp
                 if ((in == NULL) || (out == NULL))
                     continue;
 
-                if (c->bActive)
+                // Process the noise generator
+                for (size_t count = samples; count > 0;)
                 {
-                    // We process the samples for this channel, so we modify a samples copy otherwise the next channel will process 0 samples.
-                    size_t count = samples;
-
-                    if (c->bInaudible)
+                    size_t to_do    = lsp_min(count, BUFFER_SIZE);
+                    if (c->bActive)
                     {
-                        while (count > 0)
+                        if (c->bInaudible)
                         {
-                            size_t to_do    = lsp_min(count, BUFFER_SIZE);
-                            c->sNoiseGenerator.process_overwrite(vBuffer, to_do);
-                            dsp::mul_k2(vBuffer, INA_ATTENUATION, to_do);
+                            c->sNoiseGenerator.process_overwrite(vTemp, to_do);
+                            dsp::mul_k2(vTemp, INA_ATTENUATION, to_do);
 
                             switch (c->enMode)
                             {
                                 case CH_MODE_ADD:
-                                    dsp::copy(out, in, to_do);
-                                    c->sAudibleStop.process_add(out, vBuffer, to_do);
+                                    dsp::copy(vBuffer, in, to_do);
+                                    c->sAudibleStop.process_add(vBuffer, vTemp, to_do);
                                     break;
 
                                 case CH_MODE_MULT:
-                                    dsp::copy(out, in, to_do);
-                                    c->sAudibleStop.process_mul(out, vBuffer, to_do);
+                                    dsp::copy(vBuffer, in, to_do);
+                                    c->sAudibleStop.process_mul(vBuffer, vTemp, to_do);
                                     break;
 
                                 case CH_MODE_OVERWRITE:
                                 default:
-                                    c->sAudibleStop.process_overwrite(out, vBuffer, to_do);
+                                    c->sAudibleStop.process_overwrite(vBuffer, vTemp, to_do);
                                     break;
                             }
-
-                            in      += to_do;
-                            out     += to_do;
-                            count   -= to_do;
                         }
-                    }
-                    else // !c->bInaudible
-                    {
-                        switch (c->enMode)
+                        else // !bInaudible
                         {
-                            case CH_MODE_ADD:
-                                c->sNoiseGenerator.process_add(out, in, count);
-                                break;
+                            switch (c->enMode)
+                            {
+                                case CH_MODE_ADD:
+                                    c->sNoiseGenerator.process_add(vBuffer, in, count);
+                                    break;
 
-                            case CH_MODE_MULT:
-                                c->sNoiseGenerator.process_mul(out, in, count);
-                                break;
+                                case CH_MODE_MULT:
+                                    c->sNoiseGenerator.process_mul(vBuffer, in, count);
+                                    break;
 
-                            case CH_MODE_OVERWRITE:
-                            default:
-                                c->sNoiseGenerator.process_overwrite(out, count);
-                                break;
+                                case CH_MODE_OVERWRITE:
+                                default:
+                                    c->sNoiseGenerator.process_overwrite(vBuffer, count);
+                                    break;
+                            }
                         }
                     }
-                }
-                else // !c->bActive
-                {
-                    dsp::fill_zero(out, samples);
+                    else
+                        dsp::copy(vBuffer, in, count);
+
+                    // Post-process buffer
+                    c->sBypass.process(out, in, vBuffer, to_do);
+
+                    // Update pointers and proceed
+                    in      += to_do;
+                    out     += to_do;
+                    count   -= to_do;
                 }
 
                 // Make a Frequency Chart - It only needs to be updated when the settings changed. so if bUpdPlots is true.
@@ -549,31 +560,24 @@ namespace lsp
                 plug::mesh_t *mesh = c->pMsh->buffer<plug::mesh_t>();
                 if ((mesh != NULL) && (mesh->isEmpty()))
                 {
+                    // Compute frequency characteristics
                     if (c->bActive)
                     {
-                        dsp::copy(mesh->pvData[0], vFreqs, nFreqs);
-                        c->sNoiseGenerator.freq_chart(vChrtRe, vChrtIm, vFreqs, nFreqs);
-                        dsp::complex_mod(mesh->pvData[1], vChrtRe, vChrtIm, nFreqs);
-                        mesh->data(2, nFreqs);
-
-                        // Filling Inline Display Buffers by decimating main plot buffers
-                        c->nIDisplay = lsp_min(IDISPLAY_BUF_SIZE, nFreqs);
-                        size_t step = nFreqs / c->nIDisplay;
-                        size_t head = 0;
-                        for (size_t i = 0; i < c->nIDisplay; ++i)
-                        {
-                            c->vIDisplay_x[i] = mesh->pvData[0][head];
-                            c->vIDisplay_y[i] = mesh->pvData[1][head];
-                            head += step;
-                        }
-
+                        c->sNoiseGenerator.freq_chart(vFreqChart, vFreqs, meta::noise_generator_metadata::MESH_POINTS);
+                        dsp::pcomplex_mod(c->vFreqChart, vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
                     }
                     else
-                        mesh->data(2, 0);
-                }
+                        dsp::fill_zero(c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
 
-                c->bUpdPlots = false;
-            }
+                    // Commit frequency characteristics to output mesh
+                    dsp::copy(mesh->pvData[0], vFreqs, meta::noise_generator_metadata::MESH_POINTS);
+                    dsp::copy(mesh->pvData[1], c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
+                    mesh->data(2, meta::noise_generator_metadata::MESH_POINTS);
+
+                    // Update state only
+                    c->bUpdPlots = false;
+                }
+            } // for channels
         }
 
         static const uint32_t ch_colors[] =
@@ -599,75 +603,77 @@ namespace lsp
             // Init canvas
             if (!cv->init(width, height))
                 return false;
-            width   = cv->width();
-            height  = cv->height();
+            width       = cv->width();
+            height      = cv->height();
             float cx    = width >> 1;
             float cy    = height >> 1;
 
             // Clear background
+            bool bypassing = vChannels[0].sBypass.bypassing();
+            cv->set_color_rgb((bypassing) ? CV_DISABLED : CV_BACKGROUND);
             cv->paint();
 
-            // Draw axis
-            cv->set_line_width(1.0);
-            cv->set_color_rgb(CV_SILVER, 0.5f);
-            cv->line(0, 0, width, height);
-            cv->line(0, height, width, 0);
-
-            cv->set_color_rgb(CV_WHITE, 0.5f);
-            cv->line(cx, 0, cx, height);
-            cv->line(0, cy, width, cy);
-
-            // Check for solos:
-            const uint32_t *cols =
-                    (nChannels < 2) ? &ch_colors[0] :
-                    (nChannels < 4) ? &ch_colors[1] :
-                    &ch_colors[3];
-
-//            float halfv = 0.5f * width;
-//            float halfh = 0.5f * height;
-
-            // Estimate the display length
-            size_t di_length = 1;
-            for (size_t ch = 0; ch < nChannels; ++ch)
-                di_length = lsp_max(di_length, vChannels[ch].nIDisplay);
-
-            // Allocate buffer: t, f(t)
-            pIDisplay = core::IDBuffer::reuse(pIDisplay, 2, di_length);
-            core::IDBuffer *b = pIDisplay;
-            if (b == NULL)
-                return false;
-
-            bool aa = cv->set_anti_aliasing(true);
-
-            for (size_t ch = 0; ch < nChannels; ++ch)
-            {
-                channel_t *c = &vChannels[ch];
-                if (!c->bActive)
-                    continue;
-
-                // We scale the contents so that they fill the width and height span:
-                // X: Min to Max => 0 to Width
-                // Y: Min to Max => 0 to Height
-                float max_x = dsp::max(c->vIDisplay_x, c->nIDisplay);
-                float min_x = dsp::min(c->vIDisplay_x, c->nIDisplay);
-                float range_x = max_x - min_x;
-                float max_y = dsp::max(c->vIDisplay_y, c->nIDisplay);
-                float min_y = dsp::min(c->vIDisplay_y, c->nIDisplay);
-                float range_y = max_y - min_y;
-                size_t dlen = lsp_min(c->nIDisplay, di_length);
-                for (size_t i=0; i<dlen; ++i)
-                {
-                    b->v[0][i] = width * c->vIDisplay_x[i] / range_x - width * min_x / range_x;
-                    b->v[1][i] = height * c->vIDisplay_y[i] / range_y - height * min_y / range_y;
-                }
-
-                // Set color and draw
-                cv->set_color_rgb(cols[ch]);
-                cv->set_line_width(2);
-                cv->draw_lines(b->v[0], b->v[1], dlen);
-            }
-
-            cv->set_anti_aliasing(aa);
+//            // Draw axis
+//            cv->set_line_width(1.0);
+//            cv->set_color_rgb(CV_SILVER, 0.5f);
+//            cv->line(0, 0, width, height);
+//            cv->line(0, height, width, 0);
+//
+//            cv->set_color_rgb(CV_WHITE, 0.5f);
+//            cv->line(cx, 0, cx, height);
+//            cv->line(0, cy, width, cy);
+//
+//            // Check for solos:
+//            const uint32_t *cols =
+//                    (nChannels < 2) ? &ch_colors[0] :
+//                    (nChannels < 4) ? &ch_colors[1] :
+//                    &ch_colors[3];
+//
+////            float halfv = 0.5f * width;
+////            float halfh = 0.5f * height;
+//
+//            // Estimate the display length
+//            size_t di_length = 1;
+//            for (size_t ch = 0; ch < nChannels; ++ch)
+//                di_length = lsp_max(di_length, vChannels[ch].nIDisplay);
+//
+//            // Allocate buffer: t, f(t)
+//            pIDisplay = core::IDBuffer::reuse(pIDisplay, 2, di_length);
+//            core::IDBuffer *b = pIDisplay;
+//            if (b == NULL)
+//                return false;
+//
+//            bool aa = cv->set_anti_aliasing(true);
+//
+//            for (size_t ch = 0; ch < nChannels; ++ch)
+//            {
+//                channel_t *c = &vChannels[ch];
+//                if (!c->bActive)
+//                    continue;
+//
+//                // We scale the contents so that they fill the width and height span:
+//                // X: Min to Max => 0 to Width
+//                // Y: Min to Max => 0 to Height
+//                float max_x = dsp::max(c->vIDisplay_x, c->nIDisplay);
+//                float min_x = dsp::min(c->vIDisplay_x, c->nIDisplay);
+//                float range_x = max_x - min_x;
+//                float max_y = dsp::max(c->vIDisplay_y, c->nIDisplay);
+//                float min_y = dsp::min(c->vIDisplay_y, c->nIDisplay);
+//                float range_y = max_y - min_y;
+//                size_t dlen = lsp_min(c->nIDisplay, di_length);
+//                for (size_t i=0; i<dlen; ++i)
+//                {
+//                    b->v[0][i] = width * c->vIDisplay_x[i] / range_x - width * min_x / range_x;
+//                    b->v[1][i] = height * c->vIDisplay_y[i] / range_y - height * min_y / range_y;
+//                }
+//
+//                // Set color and draw
+//                cv->set_color_rgb(cols[ch]);
+//                cv->set_line_width(2);
+//                cv->draw_lines(b->v[0], b->v[1], dlen);
+//            }
+//
+//            cv->set_anti_aliasing(aa);
 
             return true;
         }
@@ -696,6 +702,8 @@ namespace lsp
                     v->write("pIn", c->pIn);
                     v->write("pOut", c->pOut);
 
+                    v->write("vFreqChart", c->vFreqChart);
+
                     v->write("pLCGdist", c->pLCGdist);
                     v->write("pVelvetType", c->pVelvetType);
                     v->write("pVelvetWin", c->pVelvetWin);
@@ -721,12 +729,11 @@ namespace lsp
 
             v->write("vBuffer", vBuffer);
             v->write("vFreqs", vFreqs);
-            v->write("vChrtRe", vChrtRe);
-            v->write("vChrtIm", vChrtIm);
-            v->write("nFreqs", nFreqs);
+            v->write("vFreqChart", vFreqChart);
             v->write("pData", pData);
             v->write_object("pIDisplay", pIDisplay);
         }
 
-    }
-}
+    } /* namespace plugins */
+} /* namespace lsp */
+

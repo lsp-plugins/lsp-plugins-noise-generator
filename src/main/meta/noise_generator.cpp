@@ -134,6 +134,7 @@ namespace lsp
     	static const port_t noise_generator_x1_ports[] =
         {
         	CHANNEL_AUDIO_PORTS("_1", " 1"),
+        	BYPASS,
 			CHANNEL_CONTROLS("_1", " 1"),
 
             PORTS_END
@@ -143,6 +144,7 @@ namespace lsp
         {
         	CHANNEL_AUDIO_PORTS("_1", " 1"),
 			CHANNEL_AUDIO_PORTS("_2", " 2"),
+			BYPASS,
 
             CHANNEL_CONTROLS("_1", " 1"),
             CHANNEL_CONTROLS("_2", " 2"),
@@ -159,6 +161,7 @@ namespace lsp
 			CHANNEL_AUDIO_PORTS("_2", " 2"),
         	CHANNEL_AUDIO_PORTS("_3", " 3"),
 			CHANNEL_AUDIO_PORTS("_4", " 4"),
+			BYPASS,
 
             CHANNEL_CONTROLS("_1", " 1"),
             CHANNEL_CONTROLS("_2", " 2"),

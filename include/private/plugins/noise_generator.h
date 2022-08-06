@@ -22,11 +22,13 @@
 #ifndef PRIVATE_PLUGINS_NOISE_GENERATOR_H_
 #define PRIVATE_PLUGINS_NOISE_GENERATOR_H_
 
-#include <lsp-plug.in/dsp-units/noise/Generator.h>
+#include <lsp-plug.in/dsp-units/ctl/Bypass.h>
 #include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
+#include <lsp-plug.in/dsp-units/noise/Generator.h>
 #include <lsp-plug.in/plug-fw/plug.h>
-#include <private/meta/noise_generator.h>
 #include <lsp-plug.in/plug-fw/core/IDBuffer.h>
+
+#include <private/meta/noise_generator.h>
 
 namespace lsp
 {
@@ -44,24 +46,25 @@ namespace lsp
             protected:
                 enum ch_update_t
                 {
-					UPD_NOISE_TYPE 			= 1 << 9,
-					UPD_NOISE_MODE 			= 1 << 10,
-					UPD_NOISE_AMPLITUDE 	= 1 << 11,
-					UPD_NOISE_OFFSET 		= 1 << 12
+                    UPD_NOISE_TYPE              = 1 << 9,
+                    UPD_NOISE_MODE              = 1 << 10,
+                    UPD_NOISE_AMPLITUDE         = 1 << 11,
+                    UPD_NOISE_OFFSET            = 1 << 12
                 };
 
                 enum ch_mode_t
-				{
-                	CH_MODE_OVERWRITE,
-					CH_MODE_ADD,
-					CH_MODE_MULT
-				};
+                {
+                    CH_MODE_OVERWRITE,
+                    CH_MODE_ADD,
+                    CH_MODE_MULT
+                };
 
                 typedef struct channel_t
                 {
                     // DSP processing modules
-                    dspu::NoiseGenerator	sNoiseGenerator;	// Noise Generator
-                    dspu::ButterworthFilter	sAudibleStop; 		// Filter to stop the audible band
+                    dspu::Bypass            sBypass;            // Bypass
+                    dspu::NoiseGenerator    sNoiseGenerator;    // Noise Generator
+                    dspu::ButterworthFilter sAudibleStop;       // Filter to stop the audible band
 
                     // Parameters
                     ch_mode_t               enMode;             // The Channel Mode
@@ -71,46 +74,43 @@ namespace lsp
                     bool                    bUpdPlots;          // Whehter to update the plots
 
                     // Audio Ports
-                    plug::IPort        		*pIn;         		// Input port
-                    plug::IPort        		*pOut;              // Output port
+                    plug::IPort            *pIn;                // Input port
+                    plug::IPort            *pOut;               // Output port
 
                     // Buffers
-                    float                   *vIDisplay_x;       // Inline Display, X
-                    float                   *vIDisplay_y;       // Inline Display, Y
-                    size_t                  nIDisplay;          // Actual number of samples in Inline Display, after decimation.
+                    float                  *vFreqChart;         // Frequency chart
 
                     // Input ports
-                    plug::IPort 			*pLCGdist; 			// LCG Distribution
-                    plug::IPort				*pVelvetType; 		// Velvet Type
-                    plug::IPort 			*pVelvetWin; 		// Velvet Window
-                    plug::IPort 			*pVelvetARNd; 		// Velvet ARN Delta
-                    plug::IPort 			*pVelvetCSW; 		// Velvet Crushing Switch
-                    plug::IPort 			*pVelvetCpr; 		// Velvet Crushing Probability
-                    plug::IPort 			*pColorSel; 		// Colour Selector
-                    plug::IPort 			*pCslopeNPN; 		// Colour Slope [Neper-per-Neper]
-                    plug::IPort 			*pCslopeDBO; 		// Colour Slope [dB-per-Octave]
-                    plug::IPort 			*pCslopeDBD; 		// Colour Slope [dB-per-Decade]
-                    plug::IPort 			*pNoiseType; 		// Noise Type Selector
-                    plug::IPort 			*pNoiseMode; 		// Noise Mode Selector
-                    plug::IPort 			*pAmplitude; 		// Noise Amplitude
-                    plug::IPort 			*pOffset; 			// Noise Offset
-                    plug::IPort 			*pInaSw; 			// Make-Inaudible-Switch
-                    plug::IPort             *pMsh;              // Mesh for Filter Frequency Chart Plot
-                    plug::IPort        		*pSlSw;        		// Solo Switch
-                    plug::IPort        		*pMtSw;        		// Mute Switch
-
+                    plug::IPort            *pLCGdist;           // LCG Distribution
+                    plug::IPort            *pVelvetType;        // Velvet Type
+                    plug::IPort            *pVelvetWin;         // Velvet Window
+                    plug::IPort            *pVelvetARNd;        // Velvet ARN Delta
+                    plug::IPort            *pVelvetCSW;         // Velvet Crushing Switch
+                    plug::IPort            *pVelvetCpr;         // Velvet Crushing Probability
+                    plug::IPort            *pColorSel;          // Colour Selector
+                    plug::IPort            *pCslopeNPN;         // Colour Slope [Neper-per-Neper]
+                    plug::IPort            *pCslopeDBO;         // Colour Slope [dB-per-Octave]
+                    plug::IPort            *pCslopeDBD;         // Colour Slope [dB-per-Decade]
+                    plug::IPort            *pNoiseType;         // Noise Type Selector
+                    plug::IPort            *pNoiseMode;         // Noise Mode Selector
+                    plug::IPort            *pAmplitude;         // Noise Amplitude
+                    plug::IPort            *pOffset;            // Noise Offset
+                    plug::IPort            *pInaSw;             // Make-Inaudible-Switch
+                    plug::IPort            *pMsh;               // Mesh for Filter Frequency Chart Plot
+                    plug::IPort            *pSlSw;              // Solo Switch
+                    plug::IPort            *pMtSw;              // Mute Switch
                 } channel_t;
 
             protected:
-                size_t         			nChannels;              // Number of channels
-                channel_t          		*vChannels;             // Noise Generator channels
-                float              		*vBuffer;               // Temporary buffer for audio processing
-                float                   *vFreqs;                // Frequency list
-                float                   *vChrtRe;               // Temporary buffer for real part of frequency chart
-                float                   *vChrtIm;               // Temporary buffer for imaginary part of frequency chart
-                size_t                  nFreqs;                 // Number of Frequencies in the List
-                uint8_t            		*pData;                 // Allocated data
-                core::IDBuffer          *pIDisplay;             // Inline display buffer
+                size_t                      nChannels;          // Number of channels
+                channel_t                  *vChannels;          // Noise Generator channels
+                float                      *vBuffer;            // Temporary buffer for audio processing
+                float                      *vTemp;              // Additional buffer for audio processing
+                float                      *vFreqs;             // Frequency list
+                float                      *vFreqChart;         // Temporary buffer for frequency chart
+                uint8_t                    *pData;              // Allocated data
+                core::IDBuffer             *pIDisplay;          // Inline display buffer
+                plug::IPort                *pBypass;            // Bypass
 
             public:
                 explicit noise_generator(const meta::plugin_t *meta);
@@ -127,13 +127,13 @@ namespace lsp
                 virtual void        dump(dspu::IStateDumper *v) const;
 
             protected:
-                inline ssize_t 					make_seed() const;
-                static dspu::lcg_dist_t 		get_lcg_dist(size_t portValue);
-                static dspu::vn_velvet_type_t   get_velvet_type(size_t portValue);
-                static dspu::ng_color_t  		get_color(size_t portValue);
-                static dspu::stlt_slope_unit_t 	get_color_slope_unit(size_t portValue);
-                static dspu::ng_generator_t 	get_generator_type(size_t portValue);
-                static ch_mode_t 				get_channel_mode(size_t portValue);
+                inline ssize_t                      make_seed() const;
+                static dspu::lcg_dist_t             get_lcg_dist(size_t portValue);
+                static dspu::vn_velvet_type_t       get_velvet_type(size_t portValue);
+                static dspu::ng_color_t             get_color(size_t portValue);
+                static dspu::stlt_slope_unit_t      get_color_slope_unit(size_t portValue);
+                static dspu::ng_generator_t         get_generator_type(size_t portValue);
+                static ch_mode_t                    get_channel_mode(size_t portValue);
         };
     }
 }

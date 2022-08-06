@@ -107,6 +107,8 @@ namespace lsp
             static constexpr float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
 
             static constexpr size_t MESH_POINTS                 = 640;
+            static constexpr float  FREQ_MIN                    = SPEC_FREQ_MIN;    // Minimum specular frequency
+            static constexpr float  FREQ_MAX                    = SPEC_FREQ_MAX;    // Maximum specular frequency
 
             static constexpr float  NOISE_AMPLITUDE_DFL			= 1.0f;
 
