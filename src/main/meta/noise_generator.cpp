@@ -122,7 +122,7 @@ namespace lsp
 			SWITCH("inas" id, "Make Inaudible Switch", 0.0f)
 
         #define VISUAL_OUTS(id, label) \
-            MESH("msh" id, "Filter Curve Display", 2, noise_generator::MESH_POINTS)
+            MESH("msh" id, "Filter Curve Display", 2, noise_generator::MESH_POINTS + 4)
 
 		#define CHANNEL_CONTROLS(id, label) \
 			LCG_CONTROLS(id, label), \

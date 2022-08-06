@@ -285,6 +285,8 @@ namespace lsp
                 c->pMsh                 = NULL;
                 c->pSlSw                = NULL;
                 c->pMtSw                = NULL;
+
+                c->bUpdPlots            = true;
             }
 
             // Bind ports
@@ -382,8 +384,8 @@ namespace lsp
         void noise_generator::update_sample_rate(long sr)
         {
             // Initialize list of frequencies
-            constexpr float min_freq    = meta::noise_generator_metadata::FREQ_MIN;
-            float max_freq              = lsp_min(sr * 0.5f, meta::noise_generator_metadata::FREQ_MAX);
+            constexpr float min_freq    = SPEC_FREQ_MIN;
+            float max_freq              = lsp_min(sr * 0.5f, SPEC_FREQ_MAX);
             float norm                  = logf(max_freq/min_freq) / (meta::noise_generator_metadata::MESH_POINTS - 1);
             for (size_t i=0; i<meta::noise_generator_metadata::MESH_POINTS; ++i)
                 vFreqs[i]                   = min_freq * expf(i * norm);
@@ -569,30 +571,29 @@ namespace lsp
                     else
                         dsp::fill_zero(c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
 
+
                     // Commit frequency characteristics to output mesh
-                    dsp::copy(mesh->pvData[0], vFreqs, meta::noise_generator_metadata::MESH_POINTS);
-                    dsp::copy(mesh->pvData[1], c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
-                    mesh->data(2, meta::noise_generator_metadata::MESH_POINTS);
+                    dsp::copy(&mesh->pvData[0][2], vFreqs, meta::noise_generator_metadata::MESH_POINTS);
+                    dsp::copy(&mesh->pvData[1][2], c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
+
+                    // Add extra points
+                    mesh->pvData[0][0] = SPEC_FREQ_MIN*0.5f;
+                    mesh->pvData[0][1] = SPEC_FREQ_MIN*0.5f;
+                    mesh->pvData[0][meta::noise_generator_metadata::MESH_POINTS+2] = SPEC_FREQ_MAX*2.0f;
+                    mesh->pvData[0][meta::noise_generator_metadata::MESH_POINTS+3] = SPEC_FREQ_MAX*2.0f;
+
+                    mesh->pvData[1][0] = GAIN_AMP_0_DB;
+                    mesh->pvData[1][1] = c->vFreqChart[0];
+                    mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+2] = c->vFreqChart[meta::noise_generator_metadata::MESH_POINTS-1];
+                    mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+3] = GAIN_AMP_0_DB;
+
+                    mesh->data(2, meta::noise_generator_metadata::MESH_POINTS + 4);
 
                     // Update state only
                     c->bUpdPlots = false;
                 }
             } // for channels
         }
-
-        static const uint32_t ch_colors[] =
-        {
-            // x1
-            0x0a9bff,
-            // x2
-            0xff0e11,
-            0x0a9bff,
-            // x4
-            0xff0e11,
-            0x12ff16,
-            0xff6c11,
-            0x0a9bff
-        };
 
         bool noise_generator::inline_display(plug::ICanvas *cv, size_t width, size_t height)
         {
@@ -605,75 +606,89 @@ namespace lsp
                 return false;
             width       = cv->width();
             height      = cv->height();
-            float cx    = width >> 1;
-            float cy    = height >> 1;
 
             // Clear background
             bool bypassing = vChannels[0].sBypass.bypassing();
             cv->set_color_rgb((bypassing) ? CV_DISABLED : CV_BACKGROUND);
             cv->paint();
 
-//            // Draw axis
-//            cv->set_line_width(1.0);
-//            cv->set_color_rgb(CV_SILVER, 0.5f);
-//            cv->line(0, 0, width, height);
-//            cv->line(0, height, width, 0);
-//
-//            cv->set_color_rgb(CV_WHITE, 0.5f);
-//            cv->line(cx, 0, cx, height);
-//            cv->line(0, cy, width, cy);
-//
-//            // Check for solos:
-//            const uint32_t *cols =
-//                    (nChannels < 2) ? &ch_colors[0] :
-//                    (nChannels < 4) ? &ch_colors[1] :
-//                    &ch_colors[3];
-//
-////            float halfv = 0.5f * width;
-////            float halfh = 0.5f * height;
-//
-//            // Estimate the display length
-//            size_t di_length = 1;
-//            for (size_t ch = 0; ch < nChannels; ++ch)
-//                di_length = lsp_max(di_length, vChannels[ch].nIDisplay);
-//
-//            // Allocate buffer: t, f(t)
-//            pIDisplay = core::IDBuffer::reuse(pIDisplay, 2, di_length);
-//            core::IDBuffer *b = pIDisplay;
-//            if (b == NULL)
-//                return false;
-//
-//            bool aa = cv->set_anti_aliasing(true);
-//
-//            for (size_t ch = 0; ch < nChannels; ++ch)
-//            {
-//                channel_t *c = &vChannels[ch];
-//                if (!c->bActive)
-//                    continue;
-//
-//                // We scale the contents so that they fill the width and height span:
-//                // X: Min to Max => 0 to Width
-//                // Y: Min to Max => 0 to Height
-//                float max_x = dsp::max(c->vIDisplay_x, c->nIDisplay);
-//                float min_x = dsp::min(c->vIDisplay_x, c->nIDisplay);
-//                float range_x = max_x - min_x;
-//                float max_y = dsp::max(c->vIDisplay_y, c->nIDisplay);
-//                float min_y = dsp::min(c->vIDisplay_y, c->nIDisplay);
-//                float range_y = max_y - min_y;
-//                size_t dlen = lsp_min(c->nIDisplay, di_length);
-//                for (size_t i=0; i<dlen; ++i)
-//                {
-//                    b->v[0][i] = width * c->vIDisplay_x[i] / range_x - width * min_x / range_x;
-//                    b->v[1][i] = height * c->vIDisplay_y[i] / range_y - height * min_y / range_y;
-//                }
-//
-//                // Set color and draw
-//                cv->set_color_rgb(cols[ch]);
-//                cv->set_line_width(2);
-//                cv->draw_lines(b->v[0], b->v[1], dlen);
-//            }
-//
-//            cv->set_anti_aliasing(aa);
+            // Draw axis
+            cv->set_line_width(1.0);
+            float zx    = 1.0f/SPEC_FREQ_MIN;
+            float zy    = GAIN_AMP_P_48_DB;
+            float dx    = width/logf(SPEC_FREQ_MAX/SPEC_FREQ_MIN);
+            float dy    = height/logf(GAIN_AMP_M_48_DB/GAIN_AMP_P_48_DB);
+
+            // Draw vertical lines
+            cv->set_color_rgb(CV_YELLOW, 0.5f);
+            for (float i=100.0f; i<SPEC_FREQ_MAX; i *= 10.0f)
+            {
+                float ax = dx*(logf(i*zx));
+                cv->line(ax, 0, ax, height);
+            }
+
+            // Draw horizontal lines
+            cv->set_color_rgb(CV_WHITE, 0.5f);
+            for (float i=GAIN_AMP_M_48_DB; i<GAIN_AMP_P_48_DB; i *= GAIN_AMP_P_12_DB)
+            {
+                float ay = height + dy*(logf(i*zy));
+                cv->line(0, ay, width, ay);
+            }
+
+            // Allocate buffer: f, amp, x, y
+            pIDisplay           = core::IDBuffer::reuse(pIDisplay, 4, width+4);
+            core::IDBuffer *b   = pIDisplay;
+            if (b == NULL)
+                return false;
+
+            // Initialize mesh
+            b->v[0][0]          = SPEC_FREQ_MIN*0.5f;
+            b->v[0][1]          = SPEC_FREQ_MIN*0.5f;
+            b->v[0][width+2]    = SPEC_FREQ_MAX*2.0f;
+            b->v[0][width+3]    = SPEC_FREQ_MAX*2.0f;
+
+            b->v[1][0]          = GAIN_AMP_0_DB;
+            b->v[1][1]          = GAIN_AMP_0_DB;
+            b->v[1][width+2]    = GAIN_AMP_0_DB;
+            b->v[1][width+3]    = GAIN_AMP_0_DB;
+
+            // Draw channels
+            Color col(CV_MESH);
+            bool aa = cv->set_anti_aliasing(true);
+            lsp_finally { cv->set_anti_aliasing(aa); };
+            cv->set_line_width(2);
+
+            // Perform frequency decimation
+            for (size_t j=0; j<width; ++j)
+            {
+                size_t k        = (j*meta::noise_generator_metadata::MESH_POINTS)/width;
+                b->v[0][j+2]    = vFreqs[k];
+            }
+            dsp::fill_zero(b->v[2], width + 4);
+            dsp::axis_apply_log1(b->v[2], b->v[0], zx, dx, width + 4);
+
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c = &vChannels[i];
+
+                // Perform amplitude decimation
+                for (size_t j=0; j<width; ++j)
+                {
+                    size_t k        = (j*meta::noise_generator_metadata::MESH_POINTS)/width;
+                    b->v[1][j+2]    = c->vFreqChart[k];
+                }
+                b->v[1][1]      = b->v[1][2];
+                b->v[1][width+2]= b->v[1][width+1];
+
+                dsp::fill(b->v[3], height, width + 4);
+                dsp::axis_apply_log1(b->v[3], b->v[1], zy, dy, width+4);
+
+                // Draw mesh
+                col.hue(float(i) / float(nChannels));
+                uint32_t color = (bypassing || !(active())) ? CV_SILVER : col.rgb24();
+                Color stroke(color), fill(color, 0.5f);
+                cv->draw_poly(b->v[2], b->v[3], width+4, stroke, fill);
+            }
 
             return true;
         }
@@ -728,6 +743,7 @@ namespace lsp
             v->end_array();
 
             v->write("vBuffer", vBuffer);
+            v->write("vTemp", vTemp);
             v->write("vFreqs", vFreqs);
             v->write("vFreqChart", vFreqChart);
             v->write("pData", pData);
