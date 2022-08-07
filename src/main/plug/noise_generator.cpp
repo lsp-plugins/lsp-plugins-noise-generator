@@ -282,6 +282,8 @@ namespace lsp
                 c->pAmplitude			= NULL;
                 c->pOffset				= NULL;
                 c->pInaSw				= NULL;
+                c->pMeterIn             = NULL;
+                c->pMeterOut            = NULL;
                 c->pMsh                 = NULL;
                 c->pSlSw                = NULL;
                 c->pMtSw                = NULL;
@@ -328,6 +330,8 @@ namespace lsp
                 vChannels[i].pOffset 		= TRACE_PORT(ports[port_id++]);
                 vChannels[i].pInaSw 		= TRACE_PORT(ports[port_id++]);
 
+                vChannels[i].pMeterIn       = TRACE_PORT(ports[port_id++]);
+                vChannels[i].pMeterOut      = TRACE_PORT(ports[port_id++]);
                 vChannels[i].pMsh           = TRACE_PORT(ports[port_id++]);
             }
 
@@ -433,7 +437,7 @@ namespace lsp
                 bool mute               = (c->pMtSw != NULL) ? c->pMtSw->value() >= 0.5f : false;
                 c->bActive              = (has_solo) ? solo : !mute;
                 c->enMode               = get_channel_mode(c->pNoiseMode->value());
-                c->bInaudible          = (c->bForceAudible) ? false : c->pInaSw->value() >= 0.5f;
+                c->bInaudible           = (c->bForceAudible) ? false : c->pInaSw->value() >= 0.5f;
 
                 // Configure noise generator
                 dspu::lcg_dist_t lcgdist = get_lcg_dist(c->pLCGdist->value());
@@ -496,6 +500,10 @@ namespace lsp
                 if ((in == NULL) || (out == NULL))
                     continue;
 
+                // Process the input level metering
+                float level             = dsp::abs_max(in, samples);
+                c->pMeterIn->set_value(level);
+
                 // Process the noise generator
                 for (size_t count = samples; count > 0;)
                 {
@@ -547,13 +555,17 @@ namespace lsp
                     else
                         dsp::copy(vBuffer, in, count);
 
+                    // Process output level metering
+                    level       = dsp::abs_max(vBuffer, to_do);
+                    c->pMeterOut->set_value(level);
+
                     // Post-process buffer
                     c->sBypass.process(out, in, vBuffer, to_do);
 
                     // Update pointers and proceed
-                    in      += to_do;
-                    out     += to_do;
-                    count   -= to_do;
+                    in         += to_do;
+                    out        += to_do;
+                    count      -= to_do;
                 }
 
                 // Make a Frequency Chart - It only needs to be updated when the settings changed. so if bUpdPlots is true.

@@ -122,6 +122,8 @@ namespace lsp
 			SWITCH("inas" id, "Make Inaudible Switch", 0.0f)
 
         #define VISUAL_OUTS(id, label) \
+            METER_GAIN("ilm" id, "Input Level Meter", GAIN_AMP_P_24_DB), \
+            METER_GAIN("olm" id, "Output Level Meter", GAIN_AMP_P_24_DB), \
             MESH("msh" id, "Filter Curve Display", 2, noise_generator::MESH_POINTS + 4)
 
 		#define CHANNEL_CONTROLS(id, label) \

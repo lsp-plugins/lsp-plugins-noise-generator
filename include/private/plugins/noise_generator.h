@@ -96,6 +96,8 @@ namespace lsp
                     plug::IPort            *pAmplitude;         // Noise Amplitude
                     plug::IPort            *pOffset;            // Noise Offset
                     plug::IPort            *pInaSw;             // Make-Inaudible-Switch
+                    plug::IPort            *pMeterIn;           // Input level meter
+                    plug::IPort            *pMeterOut;          // Output level meter
                     plug::IPort            *pMsh;               // Mesh for Filter Frequency Chart Plot
                     plug::IPort            *pSlSw;              // Solo Switch
                     plug::IPort            *pMtSw;              // Mute Switch
