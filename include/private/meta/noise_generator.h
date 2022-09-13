@@ -33,26 +33,6 @@ namespace lsp
     {
         typedef struct noise_generator_metadata
         {
-        	enum lcg_dist_selector_t
-			{
-        		NOISE_LCG_UNIFORM,
-				NOISE_LCG_EXPONENTIAL,
-				NOISE_LCG_TRIANGULAR,
-				NOISE_LCG_GAUSSIAN,
-
-				NOISE_LCG_DFL = NOISE_LCG_UNIFORM
-			};
-
-        	enum velvet_type_selector_t
-			{
-        		NOISE_VELVET_OVN,
-				NOISE_VELVET_OVNA,
-				NOISE_VELVET_ARN,
-				NOISE_VELVET_TRN,
-
-				NOISE_VELVET_DFL = NOISE_VELVET_OVN
-			};
-
             static constexpr float  VELVET_WINDOW_DURATION_MIN	= 0.0f;
             static constexpr float  VELVET_WINDOW_DURATION_MAX  = 0.1f;
             static constexpr float  VELVET_WINDOW_DURATION_DFL 	= 0.0f;
@@ -67,29 +47,6 @@ namespace lsp
             static constexpr float  VELVET_CRUSH_PROB_MAX  		= 100.0f;
             static constexpr float  VELVET_CRUSH_PROB_DFL 		= 50.0f;
             static constexpr float  VELVET_CRUSH_PROB_STEP		= 1.0e-2f;
-
-        	enum noise_type_selector_t
-			{
-        		NOISE_TYPE_MLS,
-				NOISE_TYPE_LCG,
-				NOISE_TYPE_VELVET,
-
-				NOISE_TYPE_DFL = NOISE_TYPE_LCG
-			};
-
-        	enum noise_color_selector_t
-			{
-        		NOISE_COLOR_WHITE,
-				NOISE_COLOR_PINK,
-				NOISE_COLOR_RED,
-				NOISE_COLOR_BLUE,
-				NOISE_COLOR_VIOLET,
-				NOISE_COLOR_ARBITRARY_NPN,
-				NOISE_COLOR_ARBITRARY_DBO,
-				NOISE_COLOR_ARBITRARY_DBD,
-
-				NOISE_COLOR_DFL = NOISE_COLOR_WHITE
-			};
 
             static constexpr float  NOISE_COLOR_SLOPE_NPN_MIN	= -3.0f;
             static constexpr float  NOISE_COLOR_SLOPE_NPN_MAX	= 3.0f;
@@ -114,6 +71,51 @@ namespace lsp
             static constexpr float  NOISE_OFFSET_MAX  			= 10.0f;
             static constexpr float  NOISE_OFFSET_DFL 			= 0.0f;
             static constexpr float  NOISE_OFFSET_STEP			= 0.1f;
+
+            static constexpr size_t NUM_GENERATORS              = 4;
+
+            enum noise_type_selector_t
+            {
+                NOISE_TYPE_MLS,
+                NOISE_TYPE_LCG,
+                NOISE_TYPE_VELVET,
+
+                NOISE_TYPE_DFL = NOISE_TYPE_LCG
+            };
+
+            enum noise_color_selector_t
+            {
+                NOISE_COLOR_WHITE,
+                NOISE_COLOR_PINK,
+                NOISE_COLOR_RED,
+                NOISE_COLOR_BLUE,
+                NOISE_COLOR_VIOLET,
+                NOISE_COLOR_ARBITRARY_NPN,
+                NOISE_COLOR_ARBITRARY_DBO,
+                NOISE_COLOR_ARBITRARY_DBD,
+
+                NOISE_COLOR_DFL = NOISE_COLOR_WHITE
+            };
+
+            enum lcg_dist_selector_t
+            {
+                NOISE_LCG_UNIFORM,
+                NOISE_LCG_EXPONENTIAL,
+                NOISE_LCG_TRIANGULAR,
+                NOISE_LCG_GAUSSIAN,
+
+                NOISE_LCG_DFL = NOISE_LCG_UNIFORM
+            };
+
+            enum velvet_type_selector_t
+            {
+                NOISE_VELVET_OVN,
+                NOISE_VELVET_OVNA,
+                NOISE_VELVET_ARN,
+                NOISE_VELVET_TRN,
+
+                NOISE_VELVET_DFL = NOISE_VELVET_OVN
+            };
 
         	enum noise_mode_selector_t
 			{

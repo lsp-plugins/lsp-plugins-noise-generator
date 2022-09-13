@@ -59,28 +59,28 @@ namespace lsp
                     CH_MODE_MULT
                 };
 
-                typedef struct channel_t
+                typedef struct generator_t
                 {
-                    // DSP processing modules
-                    dspu::Bypass            sBypass;            // Bypass
                     dspu::NoiseGenerator    sNoiseGenerator;    // Noise Generator
                     dspu::ButterworthFilter sAudibleStop;       // Filter to stop the audible band
 
                     // Parameters
-                    ch_mode_t               enMode;             // The Channel Mode
+                    float                   fGain;              // The outpug gain of generator
                     bool                    bActive;
                     bool                    bInaudible;
-                    bool                    bForceAudible;      // Use if the sample rate does not allow actual inaudible noise
                     bool                    bUpdPlots;          // Whehter to update the plots
 
-                    // Audio Ports
-                    plug::IPort            *pIn;                // Input port
-                    plug::IPort            *pOut;               // Output port
-
                     // Buffers
+                    float                  *vBuffer;            // Temporary buffer for generated data
                     float                  *vFreqChart;         // Frequency chart
 
                     // Input ports
+                    plug::IPort            *pAmplitude;         // Noise Amplitude
+                    plug::IPort            *pOffset;            // Noise Offset
+                    plug::IPort            *pSlSw;              // Solo Switch
+                    plug::IPort            *pMtSw;              // Mute Switch
+                    plug::IPort            *pInaSw;             // Make-Inaudible-Switch
+                    plug::IPort            *pNoiseType;         // Noise Type Selector
                     plug::IPort            *pLCGdist;           // LCG Distribution
                     plug::IPort            *pVelvetType;        // Velvet Type
                     plug::IPort            *pVelvetWin;         // Velvet Window
@@ -91,19 +91,37 @@ namespace lsp
                     plug::IPort            *pCslopeNPN;         // Colour Slope [Neper-per-Neper]
                     plug::IPort            *pCslopeDBO;         // Colour Slope [dB-per-Octave]
                     plug::IPort            *pCslopeDBD;         // Colour Slope [dB-per-Decade]
-                    plug::IPort            *pNoiseType;         // Noise Type Selector
-                    plug::IPort            *pNoiseMode;         // Noise Mode Selector
-                    plug::IPort            *pAmplitude;         // Noise Amplitude
-                    plug::IPort            *pOffset;            // Noise Offset
-                    plug::IPort            *pInaSw;             // Make-Inaudible-Switch
-                    plug::IPort            *pMeterIn;           // Input level meter
                     plug::IPort            *pMeterOut;          // Output level meter
                     plug::IPort            *pMsh;               // Mesh for Filter Frequency Chart Plot
+                } generator_t;
+
+                typedef struct channel_t
+                {
+                    // DSP processing modules
+                    dspu::Bypass            sBypass;            // Bypass
+
+                    // Parameters
+                    ch_mode_t               enMode;             // The Channel Mode
+                    float                   vGain[meta::noise_generator::NUM_GENERATORS];   // Gain for each generator
+                    float                   fGainOut;           // Output gain
+                    bool                    bActive;            // Activity flag
+                    float                  *vIn;                // Input buffer pointer
+                    float                  *vOut;               // Output buffer pointer
+
+                    // Audio Ports
+                    plug::IPort            *pIn;                // Input port
+                    plug::IPort            *pOut;               // Output port
                     plug::IPort            *pSlSw;              // Solo Switch
                     plug::IPort            *pMtSw;              // Mute Switch
+                    plug::IPort            *pNoiseMode;         // Output Mode Selector
+                    plug::IPort            *pGain[meta::noise_generator::NUM_GENERATORS];   // Generator input matrix
+                    plug::IPort            *pGainOut;           // Output gain
+                    plug::IPort            *pMeterIn;           // Input level meter
+                    plug::IPort            *pMeterOut;          // Output level meter
                 } channel_t;
 
             protected:
+                generator_t                 vGenerators[meta::noise_generator::NUM_GENERATORS];
                 size_t                      nChannels;          // Number of channels
                 channel_t                  *vChannels;          // Noise Generator channels
                 float                      *vBuffer;            // Temporary buffer for audio processing

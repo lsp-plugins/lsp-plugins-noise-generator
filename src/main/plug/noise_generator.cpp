@@ -209,9 +209,13 @@ namespace lsp
              * 1X Complex Part of Frequency Response (MESH_POINTS)
              * 1X Frequency Chart of Channel (MESH_POINTS)
              */
-            size_t buf_sz           = BUFFER_SIZE * sizeof(float);
-            size_t chr_sz           = meta::noise_generator::MESH_POINTS *  sizeof(float);
-            size_t alloc            = szof_channels + 2*buf_sz + 3*chr_sz + nChannels * chr_sz;
+            size_t buf_sz           = align_size(BUFFER_SIZE * sizeof(float), OPTIMAL_ALIGN);
+            size_t chr_sz           = align_size(meta::noise_generator::MESH_POINTS *  sizeof(float), OPTIMAL_ALIGN);
+            size_t gen_sz           = (chr_sz + buf_sz) * meta::noise_generator::NUM_GENERATORS;
+            size_t alloc            = szof_channels + // vChannels
+                                      2*buf_sz + // vBuffer, vTemp
+                                      3*chr_sz + // vFreqs, vFreqChar(2)
+                                      gen_sz; // vGenerators[i].vFreqChart
 
             // Allocate memory-aligned data
             uint8_t *ptr            = alloc_aligned<uint8_t>(pData, alloc, OPTIMAL_ALIGN);
@@ -230,65 +234,86 @@ namespace lsp
             vFreqChart              = reinterpret_cast<float *>(ptr);
             ptr                    += chr_sz * 2;
 
-            for (size_t i=0; i < nChannels; ++i)
+            // Initialize generators
+            for (size_t i=0; i<meta::noise_generator::NUM_GENERATORS; ++i)
             {
-                channel_t *c = &vChannels[i];
-
-                c->vFreqChart       = reinterpret_cast<float *>(ptr);
-                ptr                += chr_sz;
-            }
-
-            for (size_t i=0; i < nChannels; ++i)
-            {
-                channel_t *c = &vChannels[i];
+                generator_t *g          = &vGenerators[i];
 
                 // Construct in-place DSP processors
-                c->sBypass.construct();
-                c->sNoiseGenerator.construct();
-                c->sAudibleStop.construct();
+                g->sNoiseGenerator.construct();
+                g->sAudibleStop.construct();
 
                 // We seed every noise generator differently so that they produce uncorrelated noise.
                 // We set the MLS number of bits to -1 so that the initialiser sets it to maximum.
-                c->sNoiseGenerator.init(
+                g->sNoiseGenerator.init(
                     -1, make_seed(),
                     make_seed(),
                     make_seed(), -1, make_seed());
 
                 // We also set the inaudible noise filter main properties. These are not user configurable.
-                c->sAudibleStop.set_order(INA_FILTER_ORD);
-                c->sAudibleStop.set_filter_type(dspu::BW_FLT_TYPE_HIGHPASS);
+                g->sAudibleStop.set_order(INA_FILTER_ORD);
+                g->sAudibleStop.set_filter_type(dspu::BW_FLT_TYPE_HIGHPASS);
 
                 // Same with colour
-                c->sNoiseGenerator.set_coloring_order(COLOR_FILTER_ORDER);
+                g->sNoiseGenerator.set_coloring_order(COLOR_FILTER_ORDER);
+
+                // Initialize settings
+                g->fGain                = GAIN_AMP_0_DB;
+                g->bActive              = false;
+                g->bInaudible           = false;
+                g->bUpdPlots            = true;
+
+                g->vBuffer              = reinterpret_cast<float *>(ptr);
+                ptr                    += buf_sz;
+                g->vFreqChart           = reinterpret_cast<float *>(ptr);
+                ptr                    += chr_sz;
+
+                // Initialize input ports
+                g->pAmplitude           = NULL;
+                g->pOffset              = NULL;
+                g->pSlSw                = NULL;
+                g->pMtSw                = NULL;
+                g->pInaSw               = NULL;
+                g->pNoiseType           = NULL;
+                g->pLCGdist             = NULL;
+                g->pVelvetType          = NULL;
+                g->pVelvetWin           = NULL;
+                g->pVelvetARNd          = NULL;
+                g->pVelvetCSW           = NULL;
+                g->pVelvetCpr           = NULL;
+                g->pColorSel            = NULL;
+                g->pCslopeNPN           = NULL;
+                g->pCslopeDBO           = NULL;
+                g->pCslopeDBD           = NULL;
+                g->pMeterOut            = NULL;
+                g->pMsh                 = NULL;
+            }
+
+            for (size_t i=0; i < nChannels; ++i)
+            {
+                channel_t *c            = &vChannels[i];
+
+                // Construct in-place DSP processors
+                c->sBypass.construct();
 
                 // Initialise fields
                 c->enMode 				= CH_MODE_OVERWRITE;
+                for (size_t j=0; j < meta::noise_generator::NUM_GENERATORS; ++j)
+                    c->vGain[j]             = GAIN_AMP_0_DB;
+                c->fGainOut             = GAIN_AMP_0_DB;
+                c->bActive              = true;
 
+                // Initialize ports
                 c->pIn                  = NULL;
                 c->pOut                 = NULL;
-
-                c->pLCGdist             = NULL;
-                c->pVelvetType 			= NULL;
-                c->pVelvetWin			= NULL;
-                c->pVelvetARNd			= NULL;
-                c->pVelvetCSW			= NULL;
-                c->pVelvetCpr			= NULL;
-                c->pColorSel			= NULL;
-                c->pCslopeNPN			= NULL;
-                c->pCslopeDBO			= NULL;
-                c->pCslopeDBD			= NULL;
-                c->pNoiseType			= NULL;
-                c->pNoiseMode			= NULL;
-                c->pAmplitude			= NULL;
-                c->pOffset				= NULL;
-                c->pInaSw				= NULL;
-                c->pMeterIn             = NULL;
-                c->pMeterOut            = NULL;
-                c->pMsh                 = NULL;
                 c->pSlSw                = NULL;
                 c->pMtSw                = NULL;
-
-                c->bUpdPlots            = true;
+                c->pNoiseMode           = NULL;
+                for (size_t j=0; j < meta::noise_generator::NUM_GENERATORS; ++j)
+                    c->pGain[j]             = NULL;
+                c->pGainOut             = NULL;
+                c->pMeterIn             = NULL;
+                c->pMeterOut            = NULL;
             }
 
             // Bind ports
@@ -299,51 +324,61 @@ namespace lsp
             lsp_trace("Binding audio ports");
             for (size_t i=0; i<nChannels; ++i)
             {
-                vChannels[i].pIn            = TRACE_PORT(ports[port_id++]);
-                vChannels[i].pOut           = TRACE_PORT(ports[port_id++]);
+                channel_t *c            = &vChannels[i];
+                c->pIn                  = TRACE_PORT(ports[port_id++]);
+                c->pOut                 = TRACE_PORT(ports[port_id++]);
             }
 
             // Bind global ports
             lsp_trace("Binding global control ports");
             pBypass                     = TRACE_PORT(ports[port_id++]);
 
+            // Bind generator ports
+            lsp_trace("Binding generator ports");
+            for (size_t i=0; i<meta::noise_generator::NUM_GENERATORS; ++i)
+            {
+                generator_t *g          = &vGenerators[i];
+
+                g->pAmplitude           = TRACE_PORT(ports[port_id++]);
+                g->pOffset              = TRACE_PORT(ports[port_id++]);
+                g->pSlSw                = TRACE_PORT(ports[port_id++]);
+                g->pMtSw                = TRACE_PORT(ports[port_id++]);
+                g->pInaSw               = TRACE_PORT(ports[port_id++]);
+                g->pNoiseType           = TRACE_PORT(ports[port_id++]);
+
+                g->pLCGdist             = TRACE_PORT(ports[port_id++]);
+                g->pVelvetType          = TRACE_PORT(ports[port_id++]);
+                g->pVelvetWin           = TRACE_PORT(ports[port_id++]);
+                g->pVelvetARNd          = TRACE_PORT(ports[port_id++]);
+                g->pVelvetCSW           = TRACE_PORT(ports[port_id++]);
+                g->pVelvetCpr           = TRACE_PORT(ports[port_id++]);
+
+                g->pColorSel            = TRACE_PORT(ports[port_id++]);
+                g->pCslopeNPN           = TRACE_PORT(ports[port_id++]);
+                g->pCslopeDBO           = TRACE_PORT(ports[port_id++]);
+                g->pCslopeDBD           = TRACE_PORT(ports[port_id++]);
+
+                g->pMeterOut            = TRACE_PORT(ports[port_id++]);
+                g->pMsh                 = TRACE_PORT(ports[port_id++]);
+            }
+
             // Bind channel control ports
             lsp_trace("Binding channel control ports");
             for (size_t i=0; i<nChannels; ++i)
             {
-                vChannels[i].pLCGdist		= TRACE_PORT(ports[port_id++]);
+                channel_t *c            = &vChannels[i];
 
-                vChannels[i].pVelvetType 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pVelvetWin 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pVelvetARNd 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pVelvetCSW 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pVelvetCpr 	= TRACE_PORT(ports[port_id++]);
-
-                vChannels[i].pColorSel 		= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pCslopeNPN 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pCslopeDBO 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pCslopeDBD 	= TRACE_PORT(ports[port_id++]);
-
-                vChannels[i].pNoiseType 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pNoiseMode 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pAmplitude 	= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pOffset 		= TRACE_PORT(ports[port_id++]);
-                vChannels[i].pInaSw 		= TRACE_PORT(ports[port_id++]);
-
-                vChannels[i].pMeterIn       = TRACE_PORT(ports[port_id++]);
-                vChannels[i].pMeterOut      = TRACE_PORT(ports[port_id++]);
-                vChannels[i].pMsh           = TRACE_PORT(ports[port_id++]);
-            }
-
-            // Channel switches only exists on multi-channel versions. Skip for 1X plugin.
-            if (nChannels > 1)
-            {
-                lsp_trace("Binding channel switches ports");
-                for (size_t i=0; i<nChannels; ++i)
+                if (nChannels > 1)
                 {
-                    vChannels[i].pSlSw 		= TRACE_PORT(ports[port_id++]);
-                    vChannels[i].pMtSw 		= TRACE_PORT(ports[port_id++]);
+                    c->pSlSw                = TRACE_PORT(ports[port_id++]);
+                    c->pMtSw                = TRACE_PORT(ports[port_id++]);
                 }
+                c->pNoiseMode 	        = TRACE_PORT(ports[port_id++]);
+                for (size_t j=0; j<meta::noise_generator::NUM_GENERATORS; ++j)
+                    c->pGain[j]             = TRACE_PORT(ports[port_id++]);
+                c->pGainOut             = TRACE_PORT(ports[port_id++]);
+                c->pMeterIn             = TRACE_PORT(ports[port_id++]);
+                c->pMeterOut            = TRACE_PORT(ports[port_id++]);
             }
         }
 
@@ -362,12 +397,18 @@ namespace lsp
                 for (size_t i=0; i<nChannels; ++i)
                 {
                     channel_t *c    = &vChannels[i];
-                    c->vFreqChart   = NULL;
-                    c->sNoiseGenerator.destroy();
-                    c->sAudibleStop.destroy();
                     c->sBypass.destroy();
                 }
                 vChannels = NULL;
+            }
+
+            // Destroy noise generators
+            for (size_t i=0; i<meta::noise_generator::NUM_GENERATORS; ++i)
+            {
+                generator_t *g  = &vGenerators[i];
+                g->vFreqChart   = NULL;
+                g->sNoiseGenerator.destroy();
+                g->sAudibleStop.destroy();
             }
 
             // Forget about buffers
@@ -396,91 +437,125 @@ namespace lsp
             for (size_t i=0; i<meta::noise_generator_metadata::MESH_POINTS; ++i)
                 vFreqs[i]                   = min_freq * expf(i * norm);
 
-            // Update sample rate
+            // Update sample rate for channel processors
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c = &vChannels[i];
-
+                channel_t *c    = &vChannels[i];
                 c->sBypass.init(sr);
-                c->bForceAudible = (0.5f * sr) < INA_FILTER_CUTOFF;
-                c->sNoiseGenerator.set_sample_rate(sr);
-                c->sAudibleStop.set_sample_rate(sr);
-                c->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
+            }
+
+            // Update sample rate for generators
+            for (size_t i=0; i<meta::noise_generator::NUM_GENERATORS; ++i)
+            {
+                generator_t *g  = &vGenerators[i];
+                g->sNoiseGenerator.set_sample_rate(sr);
+                g->sAudibleStop.set_sample_rate(sr);
+                g->sAudibleStop.set_cutoff_frequency(INA_FILTER_CUTOFF);
             }
         }
 
         void noise_generator::update_settings()
         {
+            // Use if the sample rate does not allow actual inaudible noise
+            bool force_audible  = (0.5f * fSampleRate) < INA_FILTER_CUTOFF;
+            bool bypass         = pBypass->value() >= 0.5f;
+
             // Check if one of the channels is solo.
-            bool has_solo   = false;
-            bool bypass     = pBypass->value() >= 0.5f;
+            bool g_has_solo     = false;
+            bool c_has_solo     = false;
+
+            // Search for soloing channels
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c    = &vChannels[i];
                 if ((c->pSlSw != NULL) && (c->pSlSw->value() >= 0.5f))
                 {
-                    has_solo = true;
+                    c_has_solo  = true;
                     break;
                 }
             }
 
+            // Search for soloing generators
+            for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
+            {
+                generator_t *g      = &vGenerators[i];
+                if ((g->pSlSw != NULL) && (g->pSlSw->value() >= 0.5f))
+                {
+                    g_has_solo  = true;
+                    break;
+                }
+            }
+
+            // Update the configuration of each output channel
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
+                bool solo               = (c->pSlSw != NULL) ? c->pSlSw->value() >= 0.5f : false;
+                bool mute               = (c->pMtSw != NULL) ? c->pMtSw->value() >= 0.5f : false;
+
+                c->enMode               = get_channel_mode(c->pNoiseMode->value());
+                for (size_t j=0; j<meta::noise_generator_metadata::NUM_GENERATORS; ++j)
+                    c->vGain[j]             = c->pGain[j]->value();
+                c->fGainOut             = c->pGainOut->value();
+                c->bActive              = (c_has_solo) ? solo : !mute;
 
                 // Update bypass
                 c->sBypass.set_bypass(bypass);
+            }
+
+            for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
+            {
+                generator_t *g          = &vGenerators[i];
 
                 // If one of the channels is solo, then we simply know from the solo switch if this channel
                 // is active. Otherwise, we check whether the channel was set to mute or not.
-                bool solo               = (c->pSlSw != NULL) ? c->pSlSw->value() >= 0.5f : false;
-                bool mute               = (c->pMtSw != NULL) ? c->pMtSw->value() >= 0.5f : false;
-                c->bActive              = (has_solo) ? solo : !mute;
-                c->enMode               = get_channel_mode(c->pNoiseMode->value());
-                c->bInaudible           = (c->bForceAudible) ? false : c->pInaSw->value() >= 0.5f;
+                bool solo               = (g->pSlSw != NULL) ? g->pSlSw->value() >= 0.5f : false;
+                bool mute               = (g->pMtSw != NULL) ? g->pMtSw->value() >= 0.5f : false;
+                g->bActive              = (g_has_solo) ? solo : !mute;
+                g->bInaudible           = (force_audible) ? false : g->pInaSw->value() >= 0.5f;
 
                 // Configure noise generator
-                dspu::lcg_dist_t lcgdist = get_lcg_dist(c->pLCGdist->value());
-                dspu::vn_velvet_type_t velvettype = get_velvet_type(c->pVelvetType->value());
-                bool velvetcs           = c->pVelvetCSW->value() >= 0.5f;
-                float velvetcsp         = c->pVelvetCpr->value() * 0.01f;
-                dspu::ng_color_t color  = (c->bInaudible) ? dspu::NG_COLOR_WHITE : get_color(c->pColorSel->value());
-                dspu::ng_generator_t noise_type = get_generator_type(c->pNoiseType->value());
-                dspu::stlt_slope_unit_t color_slope_unit    = get_color_slope_unit(c->pColorSel->value());
+                dspu::lcg_dist_t lcgdist = get_lcg_dist(g->pLCGdist->value());
+                dspu::vn_velvet_type_t velvettype = get_velvet_type(g->pVelvetType->value());
+                bool velvetcs           = g->pVelvetCSW->value() >= 0.5f;
+                float velvetcsp         = g->pVelvetCpr->value() * 0.01f;
+                dspu::ng_color_t color  = (g->bInaudible) ? dspu::NG_COLOR_WHITE : get_color(g->pColorSel->value());
+                dspu::ng_generator_t noise_type = get_generator_type(g->pNoiseType->value());
+                dspu::stlt_slope_unit_t color_slope_unit    = get_color_slope_unit(g->pColorSel->value());
 
                 float color_slope       = -0.5f;
                 switch (color_slope_unit)
                 {
                     case dspu::STLT_SLOPE_UNIT_DB_PER_OCTAVE:
-                        color_slope         = c->pCslopeDBO->value();
+                        color_slope         = g->pCslopeDBO->value();
                         break;
 
                     case dspu::STLT_SLOPE_UNIT_DB_PER_DECADE:
-                        color_slope         = c->pCslopeDBD->value();
+                        color_slope         = g->pCslopeDBD->value();
                         break;
 
                     case dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER:
                     default:
-                        color_slope         = c->pCslopeNPN->value();
+                        color_slope         = g->pCslopeNPN->value();
                         break;
                 }
 
                 // If the noise has to be inaudible we are best setting it to white, or excessive high frequency boost will make it audible.
                 // Conversely, excessive low frequency attenuation will make it non-existent.
-                c->sNoiseGenerator.set_lcg_distribution(lcgdist);
-                c->sNoiseGenerator.set_velvet_type(velvettype);
-                c->sNoiseGenerator.set_velvet_window_width(c->pVelvetWin->value());
-                c->sNoiseGenerator.set_velvet_arn_delta(c->pVelvetARNd->value());
-                c->sNoiseGenerator.set_velvet_crush(velvetcs);
-                c->sNoiseGenerator.set_velvet_crushing_probability(velvetcsp);
-                c->sNoiseGenerator.set_noise_color(color);
-                c->sNoiseGenerator.set_color_slope(color_slope, color_slope_unit);
-                c->sNoiseGenerator.set_generator(noise_type);
-                c->sNoiseGenerator.set_amplitude(c->pAmplitude->value());
-                c->sNoiseGenerator.set_offset(c->pOffset->value());
+                g->sNoiseGenerator.set_lcg_distribution(lcgdist);
+                g->sNoiseGenerator.set_velvet_type(velvettype);
+                g->sNoiseGenerator.set_velvet_window_width(g->pVelvetWin->value());
+                g->sNoiseGenerator.set_velvet_arn_delta(g->pVelvetARNd->value());
+                g->sNoiseGenerator.set_velvet_crush(velvetcs);
+                g->sNoiseGenerator.set_velvet_crushing_probability(velvetcsp);
+                g->sNoiseGenerator.set_noise_color(color);
+                g->sNoiseGenerator.set_color_slope(color_slope, color_slope_unit);
+                g->sNoiseGenerator.set_generator(noise_type);
+                g->sNoiseGenerator.set_amplitude(g->pAmplitude->value());
+                g->sNoiseGenerator.set_offset(g->pOffset->value());
 
                 // Plots only really need update when we operate the controls, se we set the update to true
-                c->bUpdPlots = true;
+                g->bUpdPlots        = true;
         	}
 
             // Query inline display redraw
@@ -489,106 +564,120 @@ namespace lsp
 
         void noise_generator::process(size_t samples)
         {
-            // Process each channel independently
+            // Initialize buffer pointers
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
-
-                // Get input and output buffers
-                const float *in         = c->pIn->buffer<float>();
-                float *out              = c->pOut->buffer<float>();
-                if ((in == NULL) || (out == NULL))
-                    continue;
-
-                // Process the input level metering
-                float level             = dsp::abs_max(in, samples);
-                c->pMeterIn->set_value(level);
-
-                // Process the noise generator
-                for (size_t count = samples; count > 0;)
+                c->vIn                  = c->pIn->buffer<float>();
+                c->vOut                 = c->pOut->buffer<float>();
+            }
+            lsp_finally
+            {
+                for (size_t i=0; i<nChannels; ++i)
                 {
-                    size_t to_do    = lsp_min(count, BUFFER_SIZE);
-                    if (c->bActive)
+                    channel_t *c            = &vChannels[i];
+                    c->vIn                  = NULL;
+                    c->vOut                 = NULL;
+                }
+            };
+
+            // Process data
+            for (size_t count = samples; count > 0;)
+            {
+                size_t to_do    = lsp_min(count, BUFFER_SIZE);
+
+                // Run each noise generator first to generate random noise sequences
+                for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
+                {
+                    generator_t *g  = &vGenerators[i];
+                    float level     = GAIN_AMP_M_INF_DB;
+
+                    if (g->bActive)
                     {
-                        if (c->bInaudible)
+                        g->sNoiseGenerator.process_overwrite(g->vBuffer, to_do);
+                        if (g->bInaudible)
                         {
-                            c->sNoiseGenerator.process_overwrite(vTemp, to_do);
-                            dsp::mul_k2(vTemp, INA_ATTENUATION, to_do);
-
-                            switch (c->enMode)
-                            {
-                                case CH_MODE_ADD:
-                                    dsp::copy(vBuffer, in, to_do);
-                                    c->sAudibleStop.process_add(vBuffer, vTemp, to_do);
-                                    break;
-
-                                case CH_MODE_MULT:
-                                    dsp::copy(vBuffer, in, to_do);
-                                    c->sAudibleStop.process_mul(vBuffer, vTemp, to_do);
-                                    break;
-
-                                case CH_MODE_OVERWRITE:
-                                default:
-                                    c->sAudibleStop.process_overwrite(vBuffer, vTemp, to_do);
-                                    break;
-                            }
+                            dsp::mul_k2(g->vBuffer, INA_ATTENUATION, to_do);
+                            g->sAudibleStop.process_overwrite(g->vBuffer, g->vBuffer, to_do);
                         }
-                        else // !bInaudible
-                        {
-                            switch (c->enMode)
-                            {
-                                case CH_MODE_ADD:
-                                    c->sNoiseGenerator.process_add(vBuffer, in, count);
-                                    break;
-
-                                case CH_MODE_MULT:
-                                    c->sNoiseGenerator.process_mul(vBuffer, in, count);
-                                    break;
-
-                                case CH_MODE_OVERWRITE:
-                                default:
-                                    c->sNoiseGenerator.process_overwrite(vBuffer, count);
-                                    break;
-                            }
-                        }
+                        level           = dsp::abs_max(g->vBuffer, to_do);
                     }
                     else
-                        dsp::copy(vBuffer, in, count);
+                        dsp::fill_zero(g->vBuffer, to_do);
 
-                    // Process output level metering
-                    level       = dsp::abs_max(vBuffer, to_do);
+                    g->pMeterOut->set_value(level);
+                }
+
+                // Process each channel independently
+                for (size_t i=0; i<nChannels; ++i)
+                {
+                    channel_t *c            = &vChannels[i];
+
+                    // Measure input level
+                    float level             = dsp::abs_max(c->vIn, to_do);
+                    c->pMeterIn->set_value(level);
+
+                    // Apply matrix to the temporary buffer
+                    dsp::fill_zero(vBuffer, to_do);
+                    if (c->bActive)
+                    {
+                        // Apply gain of each generator to the output buffer
+                        for (size_t j=0; j<meta::noise_generator_metadata::NUM_GENERATORS; ++j)
+                        {
+                            generator_t *g      = &vGenerators[j];
+                            dsp::fmadd_k3(vBuffer, g->vBuffer, c->vGain[j] * c->fGainOut, to_do);
+                        }
+                    }
+
+                    // Now we have mixed output from generators, apply special mode to input
+                    switch (c->enMode)
+                    {
+                        case CH_MODE_ADD:   dsp::fmadd_k3(vBuffer, c->vIn, c->fGainOut, to_do); break;
+                        case CH_MODE_MULT:  dsp::fmmul_k3(vBuffer, c->vIn, c->fGainOut, to_do); break;
+                        case CH_MODE_OVERWRITE:
+                        default:
+                            break;
+                    }
+
+                    // Measure output level
+                    level                   = dsp::abs_max(vBuffer, to_do);
                     c->pMeterOut->set_value(level);
 
                     // Post-process buffer
-                    c->sBypass.process(out, in, vBuffer, to_do);
+                    c->sBypass.process(c->vOut, c->vIn, vBuffer, to_do);
 
                     // Update pointers and proceed
-                    in         += to_do;
-                    out        += to_do;
-                    count      -= to_do;
+                    c->vIn                 += to_do;
+                    c->vOut                += to_do;
+                    count                  -= to_do;
                 }
+            }
+
+            // Process each generator independently
+            for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
+            {
+                generator_t *g      = &vGenerators[i];
 
                 // Make a Frequency Chart - It only needs to be updated when the settings changed. so if bUpdPlots is true.
                 // We do the chart after processing so that we chart the most up to date filter state.
-                if (!c->bUpdPlots)
+                if (!g->bUpdPlots)
                     continue;
 
-                plug::mesh_t *mesh = c->pMsh->buffer<plug::mesh_t>();
+                plug::mesh_t *mesh = g->pMsh->buffer<plug::mesh_t>();
                 if ((mesh != NULL) && (mesh->isEmpty()))
                 {
                     // Compute frequency characteristics
-                    if (c->bActive)
+                    if (g->bActive)
                     {
-                        c->sNoiseGenerator.freq_chart(vFreqChart, vFreqs, meta::noise_generator_metadata::MESH_POINTS);
-                        dsp::pcomplex_mod(c->vFreqChart, vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
+                        g->sNoiseGenerator.freq_chart(vFreqChart, vFreqs, meta::noise_generator_metadata::MESH_POINTS);
+                        dsp::pcomplex_mod(g->vFreqChart, vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
                     }
                     else
-                        dsp::fill_zero(c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
-
+                        dsp::fill_zero(g->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
 
                     // Commit frequency characteristics to output mesh
                     dsp::copy(&mesh->pvData[0][2], vFreqs, meta::noise_generator_metadata::MESH_POINTS);
-                    dsp::copy(&mesh->pvData[1][2], c->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
+                    dsp::copy(&mesh->pvData[1][2], g->vFreqChart, meta::noise_generator_metadata::MESH_POINTS);
 
                     // Add extra points
                     mesh->pvData[0][0] = SPEC_FREQ_MIN*0.5f;
@@ -597,14 +686,14 @@ namespace lsp
                     mesh->pvData[0][meta::noise_generator_metadata::MESH_POINTS+3] = SPEC_FREQ_MAX*2.0f;
 
                     mesh->pvData[1][0] = GAIN_AMP_0_DB;
-                    mesh->pvData[1][1] = c->vFreqChart[0];
-                    mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+2] = c->vFreqChart[meta::noise_generator_metadata::MESH_POINTS-1];
+                    mesh->pvData[1][1] = g->vFreqChart[0];
+                    mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+2] = g->vFreqChart[meta::noise_generator_metadata::MESH_POINTS-1];
                     mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+3] = GAIN_AMP_0_DB;
 
                     mesh->data(2, meta::noise_generator_metadata::MESH_POINTS + 4);
 
                     // Update state only
-                    c->bUpdPlots = false;
+                    g->bUpdPlots = false;
                 }
             } // for channels
         }
@@ -681,15 +770,15 @@ namespace lsp
             dsp::fill_zero(b->v[2], width + 4);
             dsp::axis_apply_log1(b->v[2], b->v[0], zx, dx, width + 4);
 
-            for (size_t i=0; i<nChannels; ++i)
+            for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
             {
-                channel_t *c = &vChannels[i];
+                generator_t *g  = &vGenerators[i];
 
                 // Perform amplitude decimation
                 for (size_t j=0; j<width; ++j)
                 {
                     size_t k        = (j*meta::noise_generator_metadata::MESH_POINTS)/width;
-                    b->v[1][j+2]    = c->vFreqChart[k];
+                    b->v[1][j+2]    = g->vFreqChart[k];
                 }
                 b->v[1][1]      = b->v[1][2];
                 b->v[1][width+2]= b->v[1][width+1];
@@ -709,53 +798,86 @@ namespace lsp
 
         void noise_generator::dump(dspu::IStateDumper *v) const
         {
-            // It is very useful to dump plugin state for debug purposes
-            v->write("nChannels", nChannels);
-            v->begin_array("vChannels", vChannels, nChannels);
-
-            for (size_t i=0; i<nChannels; ++i)
+            // Write generators
+            v->begin_array("vGenerators", vGenerators, meta::noise_generator_metadata::NUM_GENERATORS);
             {
-                channel_t *c = &vChannels[i];
-
-                v->begin_object(c, sizeof(channel_t));
+                // Write generators
+                for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
                 {
-                    v->write_object("sNoiseGenerator", &c->sNoiseGenerator);
-                    v->write_object("sAudibleStop", &c->sAudibleStop);
+                    const generator_t *g  = &vGenerators[i];
 
-                    v->write("enMode", size_t(c->enMode));
-                    v->write("bActive", c->bActive);
-                    v->write("bInaudible", c->bInaudible);
-                    v->write("bForceAudible", c->bForceAudible);
-                    v->write("bUpdPlots",c->bUpdPlots);
+                    v->begin_object(g, sizeof(generator_t));
+                    {
+                        v->write_object("sNoiseGenerator", &g->sNoiseGenerator);
+                        v->write_object("sAudibleStop", &g->sAudibleStop);
 
-                    v->write("pIn", c->pIn);
-                    v->write("pOut", c->pOut);
+                        v->write("fGain", g->fGain);
+                        v->write("bActive", g->bActive);
+                        v->write("bInaudible", g->bInaudible);
+                        v->write("bUpdPlots", g->bUpdPlots);
 
-                    v->write("vFreqChart", c->vFreqChart);
+                        v->write("vBuffer", g->vBuffer);
+                        v->write("vFreqChart", g->vFreqChart);
 
-                    v->write("pLCGdist", c->pLCGdist);
-                    v->write("pVelvetType", c->pVelvetType);
-                    v->write("pVelvetWin", c->pVelvetWin);
-                    v->write("pVelvetARNd", c->pVelvetARNd);
-                    v->write("pVelvetCSW", c->pVelvetCSW);
-                    v->write("pVelvetCpr", c->pVelvetCpr);
-                    v->write("pColorSel", c->pColorSel);
-                    v->write("pCslopeNPN", c->pCslopeNPN);
-                    v->write("pCslopeDBO", c->pCslopeDBO);
-                    v->write("pCslopeDBD", c->pCslopeDBD);
-                    v->write("pNoiseType", c->pNoiseType);
-                    v->write("pNoiseMode", c->pNoiseMode);
-                    v->write("pAmplitude", c->pAmplitude);
-                    v->write("pOffset", c->pOffset);
-                    v->write("pInaSw", c->pInaSw);
-                    v->write("pMsh", c->pMsh);
-                    v->write("pSlSw", c->pSlSw);
-                    v->write("pMtSw", c->pMtSw);
+                        v->write("pAmplitude", g->pAmplitude);
+                        v->write("pOffset", g->pOffset);
+                        v->write("pSlSw", g->pSlSw);
+                        v->write("pMtSw", g->pMtSw);
+                        v->write("pInaSw", g->pInaSw);
+                        v->write("pNoiseType", g->pNoiseType);
+                        v->write("pLCGdist", g->pLCGdist);
+                        v->write("pVelvetType", g->pVelvetType);
+                        v->write("pVelvetWin", g->pVelvetWin);
+                        v->write("pVelvetARNd", g->pVelvetARNd);
+                        v->write("pVelvetCSW", g->pVelvetCSW);
+                        v->write("pVelvetCpr", g->pVelvetCpr);
+                        v->write("pColorSel", g->pColorSel);
+                        v->write("pCslopeNPN", g->pCslopeNPN);
+                        v->write("pCslopeDBO", g->pCslopeDBO);
+                        v->write("pCslopeDBD", g->pCslopeDBD);
+                        v->write("pMeterOut", g->pMeterOut);
+                        v->write("pMsh", g->pMsh);
+                    }
+                    v->end_object();
                 }
-                v->end_object();
             }
             v->end_array();
 
+            // It is very useful to dump plugin state for debug purposes
+            v->write("nChannels", nChannels);
+            v->begin_array("vChannels", vChannels, nChannels);
+            {
+                // Write channels
+                for (size_t i=0; i<nChannels; ++i)
+                {
+                    const channel_t *c = &vChannels[i];
+
+                    v->begin_object(c, sizeof(channel_t));
+                    {
+                        v->write("enMode", size_t(c->enMode));
+                        v->writev("vGain", c->vGain, meta::noise_generator::NUM_GENERATORS);
+                        v->write("fGainOut", c->fGainOut);
+                        v->write("bActive", c->bActive);
+                        v->write("vIn", c->vIn);
+                        v->write("vOut", c->vOut);
+
+                        // Audio Ports
+                        v->write("pIn", c->pIn);
+                        v->write("pOut", c->pOut);
+                        v->write("pSlSw", c->pSlSw);
+                        v->write("pMtSw", c->pMtSw);
+                        v->write("pNoiseMode", c->pNoiseMode);
+                        v->writev("pGain", c->pGain, meta::noise_generator::NUM_GENERATORS);
+                        v->write("pGainOut", c->pGainOut);
+                        v->write("pMeterIn", c->pMeterIn);
+                        v->write("pMeterOut", c->pMeterOut);
+                    }
+                    v->end_object();
+                }
+            }
+            v->end_array();
+
+            // Write global data
             v->write("vBuffer", vBuffer);
             v->write("vTemp", vTemp);
             v->write("vFreqs", vFreqs);
