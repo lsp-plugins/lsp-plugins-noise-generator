@@ -75,12 +75,12 @@ namespace lsp
                     float                  *vFreqChart;         // Frequency chart
 
                     // Input ports
+                    plug::IPort            *pNoiseType;         // Noise Type Selector
                     plug::IPort            *pAmplitude;         // Noise Amplitude
                     plug::IPort            *pOffset;            // Noise Offset
                     plug::IPort            *pSlSw;              // Solo Switch
                     plug::IPort            *pMtSw;              // Mute Switch
                     plug::IPort            *pInaSw;             // Make-Inaudible-Switch
-                    plug::IPort            *pNoiseType;         // Noise Type Selector
                     plug::IPort            *pLCGdist;           // LCG Distribution
                     plug::IPort            *pVelvetType;        // Velvet Type
                     plug::IPort            *pVelvetWin;         // Velvet Window
@@ -148,12 +148,11 @@ namespace lsp
 
             protected:
                 inline ssize_t                      make_seed() const;
-                static dspu::lcg_dist_t             get_lcg_dist(size_t portValue);
-                static dspu::vn_velvet_type_t       get_velvet_type(size_t portValue);
-                static dspu::ng_color_t             get_color(size_t portValue);
-                static dspu::stlt_slope_unit_t      get_color_slope_unit(size_t portValue);
-                static dspu::ng_generator_t         get_generator_type(size_t portValue);
-                static ch_mode_t                    get_channel_mode(size_t portValue);
+                static dspu::lcg_dist_t             get_lcg_dist(size_t value);
+                static dspu::vn_velvet_type_t       get_velvet_type(size_t value);
+                static dspu::ng_color_t             get_color(size_t value);
+                static dspu::stlt_slope_unit_t      get_color_slope_unit(size_t value);
+                static ch_mode_t                    get_channel_mode(size_t value);
         };
     }
 }

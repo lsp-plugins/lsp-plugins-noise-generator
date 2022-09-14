@@ -45,135 +45,155 @@ namespace lsp
 
         static const port_item_t noise_lcg_dist[] =
         {
-            {"Uniform",        					"noise_generator.lcg.uniform"},
-            {"Exponential",						"noise_generator.lcg.exponential"},
-            {"Triangular",     					"noise_generator.lcg.triangular"},
-            {"Gaussian",       					"noise_generator.lcg.gaussian"},
-            {NULL,          					NULL}
+            { "Uniform",                        "noise_generator.lcg.uniform" },
+            { "Exponential",                    "noise_generator.lcg.exponential" },
+            { "Triangular",                     "noise_generator.lcg.triangular" },
+            { "Gaussian",                       "noise_generator.lcg.gaussian" },
+            { NULL,                             NULL }
         };
 
         static const port_item_t noise_velvet_type[] =
         {
-            {"OVN",        						"noise_generator.velvet.ovn"},
-            {"OVNA",							"noise_generator.velvet.ovna"},
-            {"ARN",     						"noise_generator.velvet.arn"},
-            {"TRN",       						"noise_generator.velvet.trn"},
-            {NULL,          					NULL}
+            { "OVN",                            "noise_generator.velvet.ovn" },
+            { "OVNA",                           "noise_generator.velvet.ovna" },
+            { "ARN",                            "noise_generator.velvet.arn" },
+            { "TRN",                            "noise_generator.velvet.trn" },
+            { NULL,                             NULL }
         };
 
         static const port_item_t noise_type[] =
         {
-            {"MLS",        						"noise_generator.type.mls"},
-            {"LCG",								"noise_generator.type.lcg"},
-            {"VELVET",     						"noise_generator.type.velvet"},
-            {NULL,          					NULL}
+            { "MLS",                            "noise_generator.type.mls" },
+            { "LCG",                            "noise_generator.type.lcg" },
+            { "VELVET",                         "noise_generator.type.velvet" },
+            { NULL,                             NULL }
         };
 
         static const port_item_t noise_color[] =
         {
-            {"White",        					"noise_generator.color.white"},
-            {"Pink",							"noise_generator.color.pink"},
-            {"Red",     						"noise_generator.color.red"},
-            {"Blue",       						"noise_generator.color.blue"},
-			{"Violet",       					"noise_generator.color.violet"},
-			{"Arbitrary (Neper per Neper)",		"noise_generator.color.npn"},
-			{"Arbitrary (dB per Octave)",   	"noise_generator.color.dbo"},
-			{"Arbitrary (dB per Decade)",    	"noise_generator.color.dbd"},
-            {NULL,          					NULL}
+            { "White",                          "noise_generator.color.white" },
+            { "Pink",                           "noise_generator.color.pink" },
+            { "Red",                            "noise_generator.color.red" },
+            { "Blue",                           "noise_generator.color.blue" },
+            { "Violet",                         "noise_generator.color.violet" },
+            { "Arbitrary (Neper per Neper)",    "noise_generator.color.npn" },
+            { "Arbitrary (dB per Octave)",      "noise_generator.color.dbo" },
+            { "Arbitrary (dB per Decade)",      "noise_generator.color.dbd" },
+            { NULL,                             NULL }
         };
 
-        static const port_item_t noise_mode[] =
+        static const port_item_t channel_mode[] =
         {
-            {"Overwrite",        				"noise_generator.mode.over"},
-            {"Add",								"noise_generator.mode.add"},
-            {"Multiply",     					"noise_generator.mode.mult"},
-            {NULL,          					NULL}
+            { "Overwrite",                      "noise_generator.mode.over" },
+            { "Add",                            "noise_generator.mode.add" },
+            { "Multiply",                       "noise_generator.mode.mult" },
+            { NULL,                             NULL }
         };
 
-		#define CHANNEL_AUDIO_PORTS(id, label) \
-			AUDIO_INPUT("in" id, "Input" label), \
-			AUDIO_OUTPUT("out" id, "Output" label)
+        #define CHANNEL_AUDIO_PORTS(id, label) \
+            AUDIO_INPUT("in" id, "Input" label), \
+            AUDIO_OUTPUT("out" id, "Output" label)
 
-		#define CHANNEL_SWITCHES(id, label) \
-			SWITCH("chsl" id, "Solo Switch" label, 0.0f), \
-			SWITCH("chmt" id, "Mute Switch" label, 0.0f)
+        #define CHANNEL_SWITCHES(id, label) \
+            SWITCH("chsl" id, "Solo Switch" label, 0.0f), \
+            SWITCH("chmt" id, "Mute Switch" label, 0.0f)
 
-		#define LCG_CONTROLS(id, label) \
-			COMBO("lcgd" id, "LCG Distribution" label, noise_generator::NOISE_LCG_DFL, noise_lcg_dist)
+        #define LCG_CONTROLS(id, label) \
+            COMBO("ld" id, "LCG Distribution" label, noise_generator::NOISE_LCG_DFL, noise_lcg_dist)
 
-		#define VELVET_CONTROLS(id, label) \
-			COMBO("velt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
-			LOG_CONTROL("velw" id, "Velvet Window" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
-			LOG_CONTROL("veld" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
-			SWITCH("velcs" id, "Velvet Crushing Switch", 0.0f), \
-			CONTROL("velc" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
+        #define VELVET_CONTROLS(id, label) \
+            COMBO("vt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
+            LOG_CONTROL("vw" id, "Velvet Window" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
+            LOG_CONTROL("vad" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
+            SWITCH("vc" id, "Velvet Crushing", 0.0f), \
+            CONTROL("vcp" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
 
-		#define COLOR_CONTROLS(id, label) \
-			COMBO("cols" id, "Color Selector" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
-			CONTROL("csnpn" id, "Color Slope NPN" label, U_NONE, noise_generator::NOISE_COLOR_SLOPE_NPN), \
-			CONTROL("csdbo" id, "Color Slope DBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
-			CONTROL("csdbd" id, "Color Slope DBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
+        #define COLOR_CONTROLS(id, label) \
+            COMBO("cs" id, "Color Selector" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
+            CONTROL("csn" id, "Color Slope NPN" label, U_NONE, noise_generator::NOISE_COLOR_SLOPE_NPN), \
+            CONTROL("cso" id, "Color Slope dBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
+            CONTROL("csd" id, "Color Slope dBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
 
-		#define NOISE_CONTROLS(id, label) \
-			COMBO("nst" id, "Noise Type" label, noise_generator::NOISE_TYPE_DFL, noise_type), \
-			COMBO("nsm" id, "Noise Mode" label, noise_generator::NOISE_MODE_DFL, noise_mode), \
-			AMP_GAIN10("nsa" id, "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
-			CONTROL("nso" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
-			SWITCH("inas" id, "Make Inaudible Switch", 0.0f)
+        #define NOISE_CONTROLS(id, label, noise_t) \
+            COMBO("nt" id, "Noise Type" label, noise_t, noise_type), \
+            AMP_GAIN100("na" id, "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
+            CONTROL("no" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
+            SWITCH("ns" id, "Noise Solo" label, 0.0f), \
+            SWITCH("nm" id, "Noise Mute" label, 0.0f), \
+            SWITCH("ni" id, "Noise Inaudible", 0.0f)
 
-        #define VISUAL_OUTS(id, label) \
-            METER_GAIN("ilm" id, "Input Level Meter", GAIN_AMP_P_24_DB), \
-            METER_GAIN("olm" id, "Output Level Meter", GAIN_AMP_P_24_DB), \
-            MESH("msh" id, "Filter Curve Display", 2, noise_generator::MESH_POINTS + 4)
+        #define GENERATOR_CONTROLS(id, label, noise_t) \
+            NOISE_CONTROLS(id, label, noise_t), \
+            LCG_CONTROLS(id, label), \
+            VELVET_CONTROLS(id, label), \
+            COLOR_CONTROLS(id, label), \
+            METER_GAIN("nlm" id, "Noise Level Meter", GAIN_AMP_P_24_DB), \
+            MESH("nsg" id, "Noise Spectrum Graph", 2, noise_generator::MESH_POINTS + 4)
 
-		#define CHANNEL_CONTROLS(id, label) \
-			LCG_CONTROLS(id, label), \
-			VELVET_CONTROLS(id, label), \
-			COLOR_CONTROLS(id, label), \
-			NOISE_CONTROLS(id, label), \
-			VISUAL_OUTS(id, label)
+        #define CHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
+            COMBO("chm" id, "Channel Mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
+            AMP_GAIN100("gg1" id, "Generator 1 Gain" label, g1), \
+            AMP_GAIN100("gg2" id, "Generator 2 Gain" label, g2), \
+            AMP_GAIN100("gg3" id, "Generator 3 Gain" label, g3), \
+            AMP_GAIN100("gg4" id, "Generator 4 Gain" label, g4), \
+            AMP_GAIN100("gout" id, "Output gain" label, GAIN_AMP_0_DB), \
+            METER_GAIN("ilm" id, "Input Level Meter" label, GAIN_AMP_P_24_DB), \
+            METER_GAIN("olm" id, "Output Level Meter" label, GAIN_AMP_P_24_DB)
 
-    	static const port_t noise_generator_x1_ports[] =
+        #define MCHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
+            SWITCH("chs" id, "Channel Solo" label, 0.0f), \
+            SWITCH("chm" id, "Channel Mute" label, 0.0f), \
+            CHANNEL_CONTROLS(id, label, g1, g2, g3, g4)
+
+        static const port_t noise_generator_x1_ports[] =
         {
-        	CHANNEL_AUDIO_PORTS("_1", " 1"),
-        	BYPASS,
-			CHANNEL_CONTROLS("_1", " 1"),
+            CHANNEL_AUDIO_PORTS("_1", " 1"),
+            BYPASS,
+
+            GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
+            GENERATOR_CONTROLS("_2", " 2", noise_generator::NOISE_TYPE_OFF),
+            GENERATOR_CONTROLS("_3", " 3", noise_generator::NOISE_TYPE_OFF),
+            GENERATOR_CONTROLS("_4", " 4", noise_generator::NOISE_TYPE_OFF),
+
+            CHANNEL_CONTROLS("_1", " 1", 1.0f, 0.0f, 0.0f, 0.0f),
 
             PORTS_END
         };
 
-    	static const port_t noise_generator_x2_ports[] =
+        static const port_t noise_generator_x2_ports[] =
         {
-        	CHANNEL_AUDIO_PORTS("_1", " 1"),
-			CHANNEL_AUDIO_PORTS("_2", " 2"),
-			BYPASS,
+            CHANNEL_AUDIO_PORTS("_1", " 1"),
+            CHANNEL_AUDIO_PORTS("_2", " 2"),
+            BYPASS,
 
-            CHANNEL_CONTROLS("_1", " 1"),
-            CHANNEL_CONTROLS("_2", " 2"),
+            GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
+            GENERATOR_CONTROLS("_2", " 2", noise_generator::NOISE_TYPE_DFL),
+            GENERATOR_CONTROLS("_3", " 3", noise_generator::NOISE_TYPE_OFF),
+            GENERATOR_CONTROLS("_4", " 4", noise_generator::NOISE_TYPE_OFF),
 
-            CHANNEL_SWITCHES("_1", " 1"),
-            CHANNEL_SWITCHES("_2", " 2"),
+            MCHANNEL_CONTROLS("_1", " 1", 1.0f, 0.0f, 0.0f, 0.0f),
+            MCHANNEL_CONTROLS("_2", " 2", 0.0f, 1.0f, 0.0f, 0.0f),
 
             PORTS_END
         };
 
-    	static const port_t noise_generator_x4_ports[] =
+        static const port_t noise_generator_x4_ports[] =
         {
-        	CHANNEL_AUDIO_PORTS("_1", " 1"),
-			CHANNEL_AUDIO_PORTS("_2", " 2"),
-        	CHANNEL_AUDIO_PORTS("_3", " 3"),
-			CHANNEL_AUDIO_PORTS("_4", " 4"),
-			BYPASS,
+            CHANNEL_AUDIO_PORTS("_1", " 1"),
+            CHANNEL_AUDIO_PORTS("_2", " 2"),
+            CHANNEL_AUDIO_PORTS("_3", " 3"),
+            CHANNEL_AUDIO_PORTS("_4", " 4"),
+            BYPASS,
 
-            CHANNEL_CONTROLS("_1", " 1"),
-            CHANNEL_CONTROLS("_2", " 2"),
-            CHANNEL_CONTROLS("_3", " 3"),
-            CHANNEL_CONTROLS("_4", " 4"),
+            GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
+            GENERATOR_CONTROLS("_2", " 2", noise_generator::NOISE_TYPE_DFL),
+            GENERATOR_CONTROLS("_3", " 3", noise_generator::NOISE_TYPE_DFL),
+            GENERATOR_CONTROLS("_4", " 4", noise_generator::NOISE_TYPE_DFL),
 
-            CHANNEL_SWITCHES("_1", " 1"),
-            CHANNEL_SWITCHES("_2", " 2"),
-			CHANNEL_SWITCHES("_3", " 3"),
-			CHANNEL_SWITCHES("_4", " 4"),
+            MCHANNEL_CONTROLS("_1", " 1", 1.0f, 0.0f, 0.0f, 0.0f),
+            MCHANNEL_CONTROLS("_2", " 2", 0.0f, 1.0f, 0.0f, 0.0f),
+            MCHANNEL_CONTROLS("_3", " 3", 0.0f, 0.0f, 1.0f, 0.0f),
+            MCHANNEL_CONTROLS("_4", " 4", 0.0f, 0.0f, 0.0f, 1.0f),
 
             PORTS_END
         };
@@ -207,7 +227,7 @@ namespace lsp
             noise_generator_x1_ports,
             "util/noise_generator/x1.xml",
             NULL,
-			NULL,
+            NULL,
             &noise_generator_bundle
         };
 
@@ -229,7 +249,7 @@ namespace lsp
             noise_generator_x2_ports,
             "util/noise_generator/x2.xml",
             NULL,
-			NULL,
+            NULL,
             &noise_generator_bundle
         };
 
@@ -251,7 +271,7 @@ namespace lsp
             noise_generator_x4_ports,
             "util/noise_generator/x4.xml",
             NULL,
-			NULL,
+            NULL,
             &noise_generator_bundle
         };
 

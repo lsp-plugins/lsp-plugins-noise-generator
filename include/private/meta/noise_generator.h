@@ -76,11 +76,12 @@ namespace lsp
 
             enum noise_type_selector_t
             {
+                NOISE_TYPE_OFF,
                 NOISE_TYPE_MLS,
                 NOISE_TYPE_LCG,
                 NOISE_TYPE_VELVET,
 
-                NOISE_TYPE_DFL = NOISE_TYPE_LCG
+                NOISE_TYPE_DFL  = NOISE_TYPE_LCG
             };
 
             enum noise_color_selector_t
@@ -119,11 +120,11 @@ namespace lsp
 
         	enum noise_mode_selector_t
 			{
-        		NOISE_MODE_OVERWRITE,
-				NOISE_MODE_ADD,
-				NOISE_MODE_MULT,
+        		CHANNEL_MODE_OVERWRITE,
+        		CHANNEL_MODE_ADD,
+        		CHANNEL_MODE_MULT,
 
-				NOISE_MODE_DFL = NOISE_MODE_OVERWRITE
+        		CHANNEL_MODE_DFL = CHANNEL_MODE_OVERWRITE
 			};
 
         } noise_generator;

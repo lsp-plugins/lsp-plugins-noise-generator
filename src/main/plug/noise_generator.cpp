@@ -99,9 +99,9 @@ namespace lsp
             return ts.seconds ^ ts.nanos;
         }
 
-        dspu::lcg_dist_t noise_generator::get_lcg_dist(size_t portValue)
+        dspu::lcg_dist_t noise_generator::get_lcg_dist(size_t value)
         {
-            switch (portValue)
+            switch (value)
             {
                 case meta::noise_generator_metadata::NOISE_LCG_UNIFORM:
                     return dspu::LCG_UNIFORM;
@@ -115,9 +115,9 @@ namespace lsp
             }
         }
 
-        dspu::vn_velvet_type_t noise_generator::get_velvet_type(size_t portValue)
+        dspu::vn_velvet_type_t noise_generator::get_velvet_type(size_t value)
         {
-            switch (portValue)
+            switch (value)
             {
                 case meta::noise_generator_metadata::NOISE_VELVET_OVNA:
                     return dspu::VN_VELVET_OVNA;
@@ -131,9 +131,9 @@ namespace lsp
             }
         }
 
-        dspu::ng_color_t noise_generator::get_color(size_t portValue)
+        dspu::ng_color_t noise_generator::get_color(size_t value)
         {
-            switch (portValue)
+            switch (value)
             {
                 case meta::noise_generator_metadata::NOISE_COLOR_PINK:
                     return dspu::NG_COLOR_PINK;
@@ -153,9 +153,9 @@ namespace lsp
             }
         }
 
-        dspu::stlt_slope_unit_t noise_generator::get_color_slope_unit(size_t portValue)
+        dspu::stlt_slope_unit_t noise_generator::get_color_slope_unit(size_t value)
         {
-            switch (portValue)
+            switch (value)
             {
                 case meta::noise_generator_metadata::NOISE_COLOR_ARBITRARY_DBO:
                     return dspu::STLT_SLOPE_UNIT_DB_PER_OCTAVE;
@@ -167,29 +167,15 @@ namespace lsp
             }
         }
 
-        dspu::ng_generator_t noise_generator::get_generator_type(size_t portValue)
+        noise_generator::ch_mode_t noise_generator::get_channel_mode(size_t value)
         {
-            switch (portValue)
+            switch (value)
             {
-                case meta::noise_generator_metadata::NOISE_TYPE_MLS:
-                    return dspu::NG_GEN_MLS;
-                case meta::noise_generator_metadata::NOISE_TYPE_VELVET:
-                    return dspu::NG_GEN_VELVET;
-                case meta::noise_generator_metadata::NOISE_TYPE_LCG:
-                default:
-                    return dspu::NG_GEN_LCG;
-            }
-        }
-
-        noise_generator::ch_mode_t noise_generator::get_channel_mode(size_t portValue)
-        {
-            switch (portValue)
-            {
-                case meta::noise_generator_metadata::NOISE_MODE_ADD:
+                case meta::noise_generator_metadata::CHANNEL_MODE_ADD:
                     return CH_MODE_ADD;
-                case meta::noise_generator_metadata::NOISE_MODE_MULT:
+                case meta::noise_generator_metadata::CHANNEL_MODE_MULT:
                     return CH_MODE_MULT;
-                case meta::noise_generator_metadata::NOISE_MODE_OVERWRITE:
+                case meta::noise_generator_metadata::CHANNEL_MODE_OVERWRITE:
                 default:
                     return CH_MODE_OVERWRITE;
             }
@@ -269,12 +255,12 @@ namespace lsp
                 ptr                    += chr_sz;
 
                 // Initialize input ports
+                g->pNoiseType           = NULL;
                 g->pAmplitude           = NULL;
                 g->pOffset              = NULL;
                 g->pSlSw                = NULL;
                 g->pMtSw                = NULL;
                 g->pInaSw               = NULL;
-                g->pNoiseType           = NULL;
                 g->pLCGdist             = NULL;
                 g->pVelvetType          = NULL;
                 g->pVelvetWin           = NULL;
@@ -339,14 +325,15 @@ namespace lsp
             {
                 generator_t *g          = &vGenerators[i];
 
+                g->pNoiseType           = TRACE_PORT(ports[port_id++]);
                 g->pAmplitude           = TRACE_PORT(ports[port_id++]);
                 g->pOffset              = TRACE_PORT(ports[port_id++]);
                 g->pSlSw                = TRACE_PORT(ports[port_id++]);
                 g->pMtSw                = TRACE_PORT(ports[port_id++]);
                 g->pInaSw               = TRACE_PORT(ports[port_id++]);
-                g->pNoiseType           = TRACE_PORT(ports[port_id++]);
 
                 g->pLCGdist             = TRACE_PORT(ports[port_id++]);
+
                 g->pVelvetType          = TRACE_PORT(ports[port_id++]);
                 g->pVelvetWin           = TRACE_PORT(ports[port_id++]);
                 g->pVelvetARNd          = TRACE_PORT(ports[port_id++]);
@@ -520,7 +507,6 @@ namespace lsp
                 bool velvetcs           = g->pVelvetCSW->value() >= 0.5f;
                 float velvetcsp         = g->pVelvetCpr->value() * 0.01f;
                 dspu::ng_color_t color  = (g->bInaudible) ? dspu::NG_COLOR_WHITE : get_color(g->pColorSel->value());
-                dspu::ng_generator_t noise_type = get_generator_type(g->pNoiseType->value());
                 dspu::stlt_slope_unit_t color_slope_unit    = get_color_slope_unit(g->pColorSel->value());
 
                 float color_slope       = -0.5f;
@@ -550,9 +536,27 @@ namespace lsp
                 g->sNoiseGenerator.set_velvet_crushing_probability(velvetcsp);
                 g->sNoiseGenerator.set_noise_color(color);
                 g->sNoiseGenerator.set_color_slope(color_slope, color_slope_unit);
-                g->sNoiseGenerator.set_generator(noise_type);
                 g->sNoiseGenerator.set_amplitude(g->pAmplitude->value());
                 g->sNoiseGenerator.set_offset(g->pOffset->value());
+
+                size_t noise_type = g->pNoiseType->value();
+                switch (noise_type)
+                {
+                    case meta::noise_generator_metadata::NOISE_TYPE_MLS:
+                        g->sNoiseGenerator.set_generator(dspu::NG_GEN_MLS);
+                        break;
+                    case meta::noise_generator_metadata::NOISE_TYPE_VELVET:
+                        g->sNoiseGenerator.set_generator(dspu::NG_GEN_VELVET);
+                        break;
+                    case meta::noise_generator_metadata::NOISE_TYPE_LCG:
+                        g->sNoiseGenerator.set_generator(dspu::NG_GEN_LCG);
+                        break;
+                    case meta::noise_generator_metadata::NOISE_TYPE_OFF:
+                    default:
+                        g->sNoiseGenerator.set_generator(dspu::NG_GEN_LCG);
+                        g->bActive          = false;
+                        break;
+                }
 
                 // Plots only really need update when we operate the controls, se we set the update to true
                 g->bUpdPlots        = true;
@@ -819,12 +823,12 @@ namespace lsp
                         v->write("vBuffer", g->vBuffer);
                         v->write("vFreqChart", g->vFreqChart);
 
+                        v->write("pNoiseType", g->pNoiseType);
                         v->write("pAmplitude", g->pAmplitude);
                         v->write("pOffset", g->pOffset);
                         v->write("pSlSw", g->pSlSw);
                         v->write("pMtSw", g->pMtSw);
                         v->write("pInaSw", g->pInaSw);
-                        v->write("pNoiseType", g->pNoiseType);
                         v->write("pLCGdist", g->pLCGdist);
                         v->write("pVelvetType", g->pVelvetType);
                         v->write("pVelvetWin", g->pVelvetWin);
