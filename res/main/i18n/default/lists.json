@@ -13,8 +13,9 @@
 			"trn": "TRN"
 		},
 		"type": {
-			"mls": "MLS",
 			"lcg": "LCG",
+			"mls": "MLS",
+			"off": "Off",
 			"velvet": "Velvet"
 		},
 		"color": {
@@ -23,9 +24,9 @@
 			"red": "Red",
 			"blue": "Blue",
 			"violet": "Violet",
-			"npn": "Arbitrary (Neper per Neper)",
-			"dbo": "Arbitrary (dB per Octave)",
-			"dbd": "Arbitrary (dB per Decade)"
+			"npn": "Custom (Np/Np)",
+			"dbo": "Custom (dB/Octave)",
+			"dbd": "Custom (dB/Decade)"
 		},
 		"mode": {
 			"over": "Overwrite",

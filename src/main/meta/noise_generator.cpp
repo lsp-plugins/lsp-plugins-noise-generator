@@ -63,6 +63,7 @@ namespace lsp
 
         static const port_item_t noise_type[] =
         {
+            { "off",                            "noise_generator.type.off" },
             { "MLS",                            "noise_generator.type.mls" },
             { "LCG",                            "noise_generator.type.lcg" },
             { "VELVET",                         "noise_generator.type.velvet" },
@@ -76,9 +77,9 @@ namespace lsp
             { "Red",                            "noise_generator.color.red" },
             { "Blue",                           "noise_generator.color.blue" },
             { "Violet",                         "noise_generator.color.violet" },
-            { "Arbitrary (Neper per Neper)",    "noise_generator.color.npn" },
-            { "Arbitrary (dB per Octave)",      "noise_generator.color.dbo" },
-            { "Arbitrary (dB per Decade)",      "noise_generator.color.dbd" },
+            { "Custom (Np/Np)",                 "noise_generator.color.npn" },
+            { "Custom (dB/oct)",                "noise_generator.color.dbo" },
+            { "Custom (dB/dec)",                "noise_generator.color.dbd" },
             { NULL,                             NULL }
         };
 
@@ -94,23 +95,19 @@ namespace lsp
             AUDIO_INPUT("in" id, "Input" label), \
             AUDIO_OUTPUT("out" id, "Output" label)
 
-        #define CHANNEL_SWITCHES(id, label) \
-            SWITCH("chsl" id, "Solo Switch" label, 0.0f), \
-            SWITCH("chmt" id, "Mute Switch" label, 0.0f)
-
         #define LCG_CONTROLS(id, label) \
             COMBO("ld" id, "LCG Distribution" label, noise_generator::NOISE_LCG_DFL, noise_lcg_dist)
 
         #define VELVET_CONTROLS(id, label) \
             COMBO("vt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
             LOG_CONTROL("vw" id, "Velvet Window" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
-            LOG_CONTROL("vad" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
+            LOG_CONTROL("vd" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
             SWITCH("vc" id, "Velvet Crushing", 0.0f), \
-            CONTROL("vcp" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
+            CONTROL("vp" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
 
         #define COLOR_CONTROLS(id, label) \
             COMBO("cs" id, "Color Selector" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
-            CONTROL("csn" id, "Color Slope NPN" label, U_NONE, noise_generator::NOISE_COLOR_SLOPE_NPN), \
+            CONTROL("csn" id, "Color Slope NPN" label, U_NEPER, noise_generator::NOISE_COLOR_SLOPE_NPN), \
             CONTROL("cso" id, "Color Slope dBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
             CONTROL("csd" id, "Color Slope dBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
 
@@ -131,7 +128,7 @@ namespace lsp
             MESH("nsg" id, "Noise Spectrum Graph", 2, noise_generator::MESH_POINTS + 4)
 
         #define CHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
-            COMBO("chm" id, "Channel Mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
+            COMBO("cm" id, "Channel Mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
             AMP_GAIN100("gg1" id, "Generator 1 Gain" label, g1), \
             AMP_GAIN100("gg2" id, "Generator 2 Gain" label, g2), \
             AMP_GAIN100("gg3" id, "Generator 3 Gain" label, g3), \

@@ -13,8 +13,9 @@
 			"trn": "TRN"
 		},
 		"type": {
-			"mls": "MLS",
 			"lcg": "LCG",
+			"mls": "MLS",
+			"off": "Off",
 			"velvet": "Velvet"
 		},
 		"color": {
@@ -23,9 +24,9 @@
 			"red": "Rosso",
 			"blue": "Blu",
 			"violet": "Viola",
-			"npn": "Arbitrario (Neper per Neper)",
-			"dbo": "Arbitrario (dB per Ottava)",
-			"dbd": "Arbitrario (dB per Decade)"
+			"npn": "Arbitrario (Np/Np)",
+			"dbo": "Arbitrario (dB/Ott)",
+			"dbd": "Arbitrario (dB/Dec)"
 		},
 		"mode": {
 			"over": "Sovrascrittura",

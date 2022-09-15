@@ -1,0 +1,14 @@
+{
+	"noise_generator": {
+		"Ina_udible": "Ina",
+		"arn_delta": "ARN Delta",
+		"amplitude_offset": "Amplitude,\nOffset",
+		"color": "Color",
+		"crush": "Crush",
+		"crush_prob": "Crush prob",
+		"inaudible": "Inaudible",
+		"settings": "Settings",
+		"type": "Type",
+		"window": "Window"
+	}
+}
