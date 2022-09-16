@@ -222,7 +222,7 @@ namespace lsp
             noise_generator_classes,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x1_ports,
-            "util/noise_generator/x1.xml",
+            "util/noise_generator.xml",
             NULL,
             NULL,
             &noise_generator_bundle
@@ -244,7 +244,7 @@ namespace lsp
             noise_generator_classes,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x2_ports,
-            "util/noise_generator/x2.xml",
+            "util/noise_generator.xml",
             NULL,
             NULL,
             &noise_generator_bundle
@@ -266,7 +266,7 @@ namespace lsp
             noise_generator_classes,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x4_ports,
-            "util/noise_generator/x4.xml",
+            "util/noise_generator.xml",
             NULL,
             NULL,
             &noise_generator_bundle

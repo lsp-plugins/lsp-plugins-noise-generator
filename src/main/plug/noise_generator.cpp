@@ -651,11 +651,13 @@ namespace lsp
                     // Post-process buffer
                     c->sBypass.process(c->vOut, c->vIn, vBuffer, to_do);
 
-                    // Update pointers and proceed
+                    // Update pointers
                     c->vIn                 += to_do;
                     c->vOut                += to_do;
-                    count                  -= to_do;
                 }
+
+                // Update counter
+                count                  -= to_do;
             }
 
             // Process each generator independently
