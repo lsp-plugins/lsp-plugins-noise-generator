@@ -6,8 +6,11 @@
 		"color": "Color",
 		"crush": "Crush",
 		"crush_prob": "Crush prob",
+		"generators": "Generators",
 		"inaudible": "Inaudible",
+		"mode": "Mode",
 		"settings": "Settings",
+		"signal": "Signal",
 		"type": "Type",
 		"window": "Window"
 	}

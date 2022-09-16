@@ -228,6 +228,7 @@ namespace lsp
                 // Construct in-place DSP processors
                 g->sNoiseGenerator.construct();
                 g->sAudibleStop.construct();
+                g->sAudibleStop.init();
 
                 // We seed every noise generator differently so that they produce uncorrelated noise.
                 // We set the MLS number of bits to -1 so that the initialiser sets it to maximum.
@@ -689,10 +690,10 @@ namespace lsp
                     mesh->pvData[0][meta::noise_generator_metadata::MESH_POINTS+2] = SPEC_FREQ_MAX*2.0f;
                     mesh->pvData[0][meta::noise_generator_metadata::MESH_POINTS+3] = SPEC_FREQ_MAX*2.0f;
 
-                    mesh->pvData[1][0] = GAIN_AMP_0_DB;
+                    mesh->pvData[1][0] = (g->bActive) ? GAIN_AMP_0_DB : 0.0f;
                     mesh->pvData[1][1] = g->vFreqChart[0];
                     mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+2] = g->vFreqChart[meta::noise_generator_metadata::MESH_POINTS-1];
-                    mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+3] = GAIN_AMP_0_DB;
+                    mesh->pvData[1][meta::noise_generator_metadata::MESH_POINTS+3] = mesh->pvData[1][0];
 
                     mesh->data(2, meta::noise_generator_metadata::MESH_POINTS + 4);
 
@@ -777,6 +778,8 @@ namespace lsp
             for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
             {
                 generator_t *g  = &vGenerators[i];
+                if (!g->bActive)
+                    continue;
 
                 // Perform amplitude decimation
                 for (size_t j=0; j<width; ++j)
@@ -791,7 +794,7 @@ namespace lsp
                 dsp::axis_apply_log1(b->v[3], b->v[1], zy, dy, width+4);
 
                 // Draw mesh
-                col.hue(float(i) / float(nChannels));
+                col.hue(float(i) / float(meta::noise_generator_metadata::NUM_GENERATORS));
                 uint32_t color = (bypassing || !(active())) ? CV_SILVER : col.rgb24();
                 Color stroke(color), fill(color, 0.5f);
                 cv->draw_poly(b->v[2], b->v[3], width+4, stroke, fill);
