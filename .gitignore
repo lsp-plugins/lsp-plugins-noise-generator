@@ -12,4 +12,5 @@
 **/*.gmon
 *.core
 /.config.mk
+/INSTALL/
 /modules/
