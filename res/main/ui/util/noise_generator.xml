@@ -288,7 +288,7 @@
 				</ui:for>
 				
 				<ui:for id="i" first="1" count=":channels">
-					<ui:set id="hue" value="${(:i-1)/:count}"/>
+					<ui:set id="hue" value="${(:i-1.0)/:channels}"/>
 					
 					<!-- row -->
 					<label text="labels.chan.id" text:id="${i}" />
