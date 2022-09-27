@@ -7,116 +7,351 @@
 	<ui:if test="ex :out_4">
 		<ui:set id="channels" value="4" />
 	</ui:if>
-			
-	<vbox spacing="4">
-		<group ipadding="0" expand="true" fill="true" text="labels.graphs.spectrum">
-			<graph width.min="320" height.min="200" expand="true">
-				<origin hpos="-1" vpos="-1" visible="false"/>
 
-				<!-- Gray grid -->
-				<ui:with ox="0" oy="1">
-					<ui:for id="f" first="20" last="90" step="10">
-						<marker v="${f}" color="graph_alt_1"/>
-						<marker v="${:f*10}" color="graph_alt_1"/>
-						<marker v="${:f*100}" color="graph_alt_1"/>
+	<!-- bor-T -->
+	<grid rows="2" cols="3" spacing="4">
+		<vbox spacing="4" expand="true">
+
+			<!-- Graph -->
+			<group ui:inject="GraphGroup" ipadding="0" expand="true" fill="true" text="labels.graphs.spectrum">
+				<graph width.min="320" height.min="200" expand="true">
+					<origin hpos="-1" vpos="-1" visible="false"/>
+
+					<!-- Gray grid -->
+					<ui:with ox="0" oy="1">
+						<ui:for id="f" first="20" last="90" step="10">
+							<marker v="${f}" color="graph_alt_1"/>
+							<marker v="${:f*10}" color="graph_alt_1"/>
+							<marker v="${:f*100}" color="graph_alt_1"/>
+						</ui:for>
+						<marker value="20000" color="graph_alt_1"/>
+					</ui:with>
+					<ui:for id="g" first="-36" last="36" step="24">
+						<marker v="${g} db" ox="1" oy="0" color="graph_alt_1"/>
 					</ui:for>
-					<marker value="20000" color="graph_alt_1"/>
-				</ui:with>
-				<ui:for id="g" first="-36" last="36" step="24">
-					<marker v="${g} db" ox="1" oy="0" color="graph_alt_1"/>
+
+					<!-- Yellow grid -->
+					<ui:with ox="0" oy="1" color="graph_sec">
+						<marker v="100"/>
+						<marker v="1000"/>
+						<marker v="10000"/>
+					</ui:with>
+					<ui:with ox="1" oy="0" color="graph_sec">
+						<marker v="+24 db"/>
+						<marker v="0 db"/>
+						<marker v="-24 db"/>
+					</ui:with>
+
+					<!-- Meshes -->
+					<ui:for id="i" first="1" count="4">
+						<ui:set id="hue" value="${(:i-1)/4.0}"/>
+						<mesh id="nsg_${i}"
+							width="2" smooth="true"
+							color="graph_mesh_cycle" color.hue="${hue}"
+							fill="true" fcolor="graph_mesh_cycle" fcolor.hue="${hue}" fcolor.a="0.8" />
+					</ui:for>
+
+					<!-- Boundaries -->
+					<marker ox="2" oy="0" v="1" color="graph_prim" visibility="false"/>
+					<!-- +48 dB -->
+					<marker ox="0" oy="1" v="24000" color="graph_prim" visibility="false"/>
+
+					<!-- Axis -->
+					<axis min="10" max="24000" color="graph_prim" angle="0.0" log="true" visibility="false"/>
+					<axis min="-48 db" max="48 db" color="graph_prim" angle="0.5" log="true" visibility="false"/>
+					<!-- -48..+48 dB -->
+					<axis min="-1" max="1" visible="false" angle="0.5"/>
+
+					<!-- Text -->
+					<ui:with ox="0" oy="2" y="0" halign="1" valign="1">
+					  <text x="10" text="graph.units.hz"/>
+					  <text x="20" text="20"/>
+					  <text x="30" text="30"/>
+					  <text x="50" text="50"/>
+					  <text x="100" text="100"/>
+					  <text x="200" text="200"/>
+					  <text x="300" text="300"/>
+					  <text x="500" text="500"/>
+					  <text x="1000" text="graph.values.x_k" text:value="1"/>
+					  <text x="2000" text="graph.values.x_k" text:value="2"/>
+					  <text x="3000" text="graph.values.x_k" text:value="3"/>
+					  <text x="5000" text="graph.values.x_k" text:value="5"/>
+					  <text x="10000" text="graph.values.x_k" text:value="10"/>
+					  <text x="20000" text="graph.values.x_k" text:value="20"/>
+					</ui:with>
+
+					<ui:with x="10" halign="1">
+						<text y="36 db" text="+36" valign="-1"/>
+						<text y="24 db" text="+24" valign="-1"/>
+						<text y="12 db" text="+12" valign="-1"/>
+						<text y="0 db" text="0" valign="1"/>
+						<text y="-12 db" text="-12" valign="1"/>
+						<text y="-24 db" text="-24" valign="1"/>
+						<text y="-36 db" text="-36" valign="1"/>
+						<text y="1" ox="0" oy="2" text="graph.units.db" valign="-1"/>
+					</ui:with>
+				</graph>
+			</group>
+
+			<align halign="1" expand="false">
+				<hbox spacing="4" bg.color="bg_schema" pad.h="6" pad.b="4" pad.t="4">
+					<label text="labels.mode"/>
+					<combo id="slope" pad.r="6"/>
+					<combo id="mode" pad.r="12"/>
+					<button id="fftv_l" height="22" width="45" text="labels.chan.left" ui:inject="Button_left"/>
+					<button id="fftv_r" height="22" width="45" text="labels.chan.right" ui:inject="Button_right"/>
+				</hbox>
+			</align>
+		</vbox>
+
+		<!-- Zoom Fader -->
+		<hbox spacing="4" bg.color="bg">
+			<vbox vexpand="true" bg.color="bg_schema">
+				<label font.name="lsp-icons" font.size="12" font.antialias="true" text="E" color="text_icon" pad.b="4" pad.t="4"/>
+				<fader id="zoom" angle="1" vexpand="true" bg.inherit="true" flat="true"/>
+				<value id="zoom" width="40"/>
+			</vbox>
+
+			<!-- Signal generators -->
+			<group text="labels.noise_generator.signal" ipadding="0" fill="true" >
+				<!-- <grid rows="${:channels*2 + 2}" cols="${9 + (:channels > 1)}"> -->
+					<grid rows="5" cols="${:channels*2-1}" transpose="true" >
+					<!-- row 1 -->
+					<ui:for id="i" first="1" count=":channels">
+						<ui:set id="hue" value="${(:i-1.0)/:channels}"/>
+							<label text="labels.chan.id" text:id="${i}" />
+							<cell bg.color="bg" pad.v="2" vreduce="true" vexpand="false">
+								<hsep/>
+							</cell>
+							<vbox fill="false">
+								<label text="labels.noise_generator.mode" />
+								<combo id="cm_${i}" />
+							</vbox>
+							<hbox fill="false">
+								<button
+									id="chs_${i}"
+									text="labels.chan.S_olo"
+									ui:inject="Button_Cycle"
+									size="22"
+									font.size="10"
+									down.color.hue="${hue}"
+									down.hover.color.hue="${hue}"
+									text.down.color.hue="${hue}"
+									text.down.hover.color.hue=":${hue}"
+									border.down.color.hue="${hue}"
+									border.down.hover.color.hue="${hue}"
+									pad.r="6"
+									expand="false" />
+								<button
+									id="chm_${i}"
+									text="labels.chan.M_ute"
+									ui:inject="Button_Cycle"
+									size="22"
+									font.size="10"
+									down.color.hue="${hue}"
+									down.hover.color.hue="${hue}"
+									text.down.color.hue="${hue}"
+									text.down.hover.color.hue="${hue}"
+									border.down.color.hue="${hue}"
+									border.down.hover.color.hue="${hue}"
+									pad.r="6"
+									expand="false" />
+							</hbox>
+							<!-- <label text="labels.noise_generator.generators" /> -->
+							<cell>
+								<grid rows="12" cols="2" >
+									<!-- TODO: Ad input variable -->
+									<knob id="gg1_${i}" scolor.hue="${hue}" />
+									<vbox fill="false">
+										<label text="labels.chan.in" />
+									<value id="gg1_${i}" same_line="true" />
+								</vbox>
+								<!-- TODO: end -->
+									<ui:for id="j" first="1" count="4">
+										<knob id="gg${j}_${i}" scolor.hue="${hue}" />
+										<vbox fill="false">
+											<label text="labels.chan.id" text:id="${j}" />
+										<value id="gg${j}_${i}" same_line="true" />
+									</vbox>
+									</ui:for>
+										<knob id="gout_${i}" scolor.hue="${hue}" />
+									<vbox fill="false">
+										<label text="labels.chan.out" />
+									<value id="gout_${i}" same_line="true" />
+								</vbox>
+							</grid>
+							</cell>
+							<cell rows="5" bg.color="bg" pad.h="2" >
+								<vsep/>
+							</cell>
+
+
+
+
+
+
+</ui:for>
+				</grid>
+			</group>
+
+			<!-- Signal meters -->
+
+			<vbox vexpand="true" bg.color="bg_schema">
+				<label text="labels.chan.in" pad.b="3" pad.t="3"/>
+				<ledmeter vexpand="true" angle="1">
+					<ui:for id="i" first="1" count=":channels">
+						<ui:set id="hue" value="${(:i-1.0)/:channels}"/>
+						<ledchannel id="ilm_${i}"
+							min="-72 db" max="+24 db" log="true" type="rms_peak"
+							peak.visibility="true"
+							value.color="mono_in" value.color.hue="${hue}"
+						/>
+						</ui:for>
+				</ledmeter>
+			</vbox>
+
+			<vbox vexpand="true" bg.color="bg_schema">
+				<label text="labels.chan.out" pad.b="3" pad.t="3"/>
+				<ledmeter vexpand="true" angle="1">
+					<ui:for id="i" first="1" count=":channels">
+						<ui:set id="hue" value="${(:i-1.0)/:channels}"/>
+						<ledchannel id="olm_${i}"
+							min="-72 db" max="+24 db" log="true" type="rms_peak"
+							peak.visibility="true"
+							value.color="mono_in" value.color.hue="${hue}"
+						/>
 				</ui:for>
+				</ledmeter>
+			</vbox>
+		</hbox>
 
-				<!-- Yellow grid -->
-				<ui:with ox="0" oy="1" color="graph_sec">
-					<marker v="100"/>
-					<marker v="1000"/>
-					<marker v="10000"/>
-				</ui:with>
-				<ui:with ox="1" oy="0" color="graph_sec">
-					<marker v="+24 db"/>
-					<marker v="0 db"/>
-					<marker v="-24 db"/>
-				</ui:with>
+		<vbox spacing="4">
+			<group text="groups.signal" expand="true">
+				<grid rows="3" cols="2" hspacing="4">
+					<knob id="g_in" pad.r="4"/>
+					<vbox vfill="false">
+						<label text="labels.input" halign="0"/>
+						<value id="g_in" sline="true" halign="0"/>
+					</vbox>
 
-				<!-- Meshes -->
-				<ui:for id="i" first="1" count="4">
-					<ui:set id="hue" value="${(:i-1)/4.0}"/>
-					<mesh id="nsg_${i}"
-						width="2" smooth="true"
-						color="graph_mesh_cycle" color.hue="${hue}"
-						fill="true" fcolor="graph_mesh_cycle" fcolor.hue="${hue}" fcolor.a="0.8" />
-				</ui:for>
+					<knob id="g_out" pad.r="4"/>
+					<vbox vfill="false">
+						<label text="labels.output" expand="true" halign="0"/>
+						<value id="g_out" width.min="50" sline="true" halign="0"/>
+					</vbox>
 
-				<!-- Boundaries -->
-				<marker ox="2" oy="0" v="1" color="graph_prim" visibility="false"/>
-				<!-- +48 dB -->
-				<marker ox="0" oy="1" v="24000" color="graph_prim" visibility="false"/>
+					<knob id="bal" balance="0.5" scolor="balance" pad.r="4"/>
+					<vbox vfill="false">
+						<label text="labels.balance" halign="0"/>
+						<value id="bal" width.min="50" sline="true" halign="0"/>
+					</vbox>
 
-				<!-- Axis -->
-				<axis min="10" max="24000" color="graph_prim" angle="0.0" log="true" visibility="false"/>
-				<axis min="-48 db" max="48 db" color="graph_prim" angle="0.5" log="true" visibility="false"/>
-				<!-- -48..+48 dB -->
-				<axis min="-1" max="1" visible="false" angle="0.5"/>
+				</grid>
+			</group>
+			<group text="groups.analysis" expand="true">
+				<vbox>
+					<label text="labels.fft.fft" halign="0"/>
+					<combo id="fft" fill="true"/>
 
-				<!-- Text -->
-				<ui:with ox="0" oy="2" y="0" halign="1" valign="1">
-				  <text x="10" text="graph.units.hz"/>
-				  <text x="20" text="20"/>
-				  <text x="30" text="30"/>
-				  <text x="50" text="50"/>
-				  <text x="100" text="100"/>
-				  <text x="200" text="200"/>
-				  <text x="300" text="300"/>
-				  <text x="500" text="500"/>
-				  <text x="1000" text="graph.values.x_k" text:value="1"/>
-				  <text x="2000" text="graph.values.x_k" text:value="2"/>
-				  <text x="3000" text="graph.values.x_k" text:value="3"/>
-				  <text x="5000" text="graph.values.x_k" text:value="5"/>
-				  <text x="10000" text="graph.values.x_k" text:value="10"/>
-				  <text x="20000" text="graph.values.x_k" text:value="20"/>
-				</ui:with>
+					<grid rows="2" cols="2" transpose="false" expand="true" hspacing="4">
+						<knob id="react" size="20" pad.r="4"/>
+						<vbox vfill="false">
+							<label text="labels.metering.reactivity" halign="0"/>
+							<value id="react" width.min="50" sline="true" halign="0"/>
+						</vbox>
 
-				<ui:with x="10" halign="1">
-					<text y="36 db" text="+36" valign="-1"/>
-					<text y="24 db" text="+24" valign="-1"/>
-					<text y="12 db" text="+12" valign="-1"/>
-					<text y="0 db" text="0" valign="1"/>
-					<text y="-12 db" text="-12" valign="1"/>
-					<text y="-24 db" text="-24" valign="1"/>
-					<text y="-36 db" text="-36" valign="1"/>
-					<text y="1" ox="0" oy="2" text="graph.units.db" valign="-1"/>
-				</ui:with>
-			</graph>
-		</group>
-		<group text="labels.noise_generator.generators" ipdadding="0" fill="true">
-			<grid rows="7" cols="${1 + 4*4}" transpose="true">
-				<void />
-				<label text="labels.noise_generator.type" />
-				<label text="labels.noise_generator.settings" />
-				<label text="labels.noise_generator.amplitude_offset" />
-				<void />
-				<label text="labels.noise_generator.color" />
-				<void />
-				
-				<ui:for id="i" first="1" count="4">
-					<ui:set id="ch" value="_${i}"/>
-					<ui:set id="hue" value="${(:i-1)/4.0}"/>
-					
-					<!-- Separator -->
-					<cell rows="7" bg.color="bg" pad.r="2" pad.l="2" expand="false" pad.t="6" pad.b="6">
-						<vsep/>
+						<knob id="shift" size="20" pad.r="4"/>
+						<vbox vfill="false">
+							<label text="labels.metering.shift" halign="0"/>
+							<value id="shift" width.min="50" sline="true" halign="0"/>
+						</vbox>
+					</grid>
+				</vbox>
+			</group>
+		</vbox>
+
+		<cell cols="3">
+			<group text="labels.noise_generator.generators" ipadding="0" fill="true">
+	<grid rows="9" cols="25" transpose="true" >
+
+		<label text="labels.noise_generator.number_#" />
+		<cell cols="25" bg.color="bg" pad.v="2" vreduce="true" vexpand="false">
+			<hsep/>
+		</cell>
+		<label text="labels.noise_generator.type" />
+		<label text="labels.noise_generator.settings" />
+		<label text="labels.noise_generator.color" />
+		<label text="labels.noise_generator.distribution" />
+		<label text="labels.noise_generator.velvet_type" />
+		<cell rows="2">
+		<label text="labels.noise_generator.crush" />
+</cell>
+
+		<ui:for id="i" first="1" count="4">
+			<ui:set id="ch" value="_${i}"/>
+			<ui:set id="hue" value="${(:i-1)/4.0}"/>
+
+			<cell bg.color="bg" pad.h="2" hreduce="true" hexpand="false">
+				<vsep/>
+			</cell>
+			<cell rows="7" bg.color="bg" pad.h="2" hreduce="true" hexpand="false">
+				<vsep/>
+			</cell>
+
+			<ui:with
+					expand="true"
+					bright="(:nt${ch} igt 0) ? 1 : 0.75"
+					bg.bright="(:nt${ch} igt 0) ? 1.0 : :const_bg_darken">
+					<cell cols="5">
+						<label text="labels.chan.id" text:id="${i}" pad="6"/>
 					</cell>
-					
-					<ui:with expand="true"
-						bright="(:nt${ch} igt 0) ? 1 : 0.75"
-						bg.bright="(:nt${ch} igt 0) ? 1.0 : :const_bg_darken">
-
-						<cell cols="3"><label text="labels.chan.id" text:id="${i}" pad="6"/></cell>
-						<cell cols="2" fill="true"><combo id="nt${ch}" fill="true" pad.l="6" pad.r="6" pad.b="6"/></cell>
-						
-						<!-- Settings -->
-						<cell cols="2">
-							<ui:if test="!ex :ns${ch}">
+					<combo id="nt${ch}" pad.r="6" pad.v="4"/>
+					<hbox fill="false">
+						<!-- <ui:if test="!ex :ns${ch}">
+							<button
+								id="ni${ch}"
+								text="labels.noise_generator.inaudible"
+								ui:inject="Button_Cycle"
+								size="22"
+								font.size="10"
+								down.color.hue="${hue}"
+								down.hover.color.hue="${hue}"
+								text.down.color.hue="${hue}"
+								text.down.hover.color.hue="${hue}"
+								border.down.color.hue="${hue}"
+								border.down.hover.color.hue="${hue}"
+								pad.r="6"
+								expand="false" />
+						</ui:if> -->
+						<!-- <ui:if test="ex :ns${ch}"> -->
+								<button
+									id="ns${ch}"
+									text="labels.chan.S_olo"
+									ui:inject="Button_Cycle"
+									size="22"
+									font.size="10"
+									down.color.hue="${hue}"
+									down.hover.color.hue="${hue}"
+									text.down.color.hue="${hue}"
+									text.down.hover.color.hue=":${hue}"
+									border.down.color.hue="${hue}"
+									border.down.hover.color.hue="${hue}"
+									pad.r="6"
+									expand="false" />
+								<button
+									id="nm${ch}"
+									text="labels.chan.M_ute"
+									ui:inject="Button_Cycle"
+									size="22"
+									font.size="10"
+									down.color.hue="${hue}"
+									down.hover.color.hue="${hue}"
+									text.down.color.hue="${hue}"
+									text.down.hover.color.hue="${hue}"
+									border.down.color.hue="${hue}"
+									border.down.hover.color.hue="${hue}"
+									pad.r="6"
+									expand="false" />
 								<button
 									id="ni${ch}"
 									text="labels.noise_generator.inaudible"
@@ -131,233 +366,145 @@
 									border.down.hover.color.hue="${hue}"
 									pad.r="6"
 									expand="false" />
-							</ui:if>
-							<ui:if test="ex :ns${ch}">
-								<grid bg.color="bg" rows="1" cols="3">
-									<button
-										id="ns${ch}"
-										text="labels.chan.S_olo"
-										ui:inject="Button_Cycle"
-										size="22"
-										font.size="10"
-										down.color.hue="${hue}"
-										down.hover.color.hue="${hue}"
-										text.down.color.hue="${hue}"
-										text.down.hover.color.hue=":${hue}"
-										border.down.color.hue="${hue}"
-										border.down.hover.color.hue="${hue}"
-										pad.r="6"
-										expand="false" />
-									<button
-										id="nm${ch}"
-										text="labels.chan.M_ute"
-										ui:inject="Button_Cycle"
-										size="22"
-										font.size="10"
-										down.color.hue="${hue}"
-										down.hover.color.hue="${hue}"
-										text.down.color.hue="${hue}"
-										text.down.hover.color.hue="${hue}"
-										border.down.color.hue="${hue}"
-										border.down.hover.color.hue="${hue}"
-										pad.r="6"
-										expand="false" />
-									<button
-										id="ni${ch}"
-										text="labels.noise_generator.Ina_udible"
-										ui:inject="Button_Cycle"
-										size="22"
-										font.size="10"
-										down.color.hue="${hue}"
-										down.hover.color.hue="${hue}"
-										text.down.color.hue="${hue}"
-										text.down.hover.color.hue="${hue}"
-										border.down.color.hue="${hue}"
-										border.down.hover.color.hue="${hue}"
-										pad.r="6"
-										expand="false" />
-								</grid>
-							</ui:if>
-						</cell>
+						<!-- </ui:if> -->
+					</hbox>
+					<combo id="cs${ch}" pad.r="6" pad.v="4" />
+					<combo id="ld${ch}" pad.r="6" pad.v="4" bright="(:nt${ch} ieq 2) ? 1 : 0.75"
+					bg.bright="(:nt${ch} ieq 2) ? 1.0 : :const_bg_darken"/>
+					<combo id="vt${ch}" pad.r="6" pad.v="4" bright="(:nt${ch} ieq 3) ? 1 : 0.75"
+					bg.bright="(:nt${ch} ieq 3) ? 1.0 : :const_bg_darken"/>
 
-						<!-- Amplitude -->						
-						<knob id="na${ch}" scolor="(:nt${ch} igt 0) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" pad.t="6"/>
-						<value id="na${ch}" width.min="40" detailed="false" precision="1" pad.t="3"/>
-						
-						<!-- Color -->
-						<cell cols="2">
-							<grid rows="2" cols="2">
-								<cell cols="2">
-									<combo id="cs${ch}" />
-								</cell>
-								<hbox>
-									<knob id="csn${ch}" scolor.hue="${hue}" visibility=":cs${ch} ieq 5"/>
-									<knob id="cso${ch}" scolor.hue="${hue}" visibility=":cs${ch} ieq 6"/>
-									<knob id="csd${ch}" scolor.hue="${hue}" visibility=":cs${ch} ieq 7"/>
-								</hbox>
-								<hbox>
-									<value id="csn${ch}" same_line="true" visibility=":cs${ch} ieq 5"/>
-									<value id="cso${ch}" same_line="true" visibility=":cs${ch} ieq 6"/>
-									<value id="csd${ch}" same_line="true" visibility=":cs${ch} ieq 7"/>
-								</hbox>
-							</grid>
-						</cell>
-						
-						<!-- Custom settings -->
-						<cell cols="2">
-							<vbox>
-								<grid rows="2" cols="1" bg.color="bg_schema" visibility=":nt${ch} ieq 2">
-									<label text="labels.noise_generator.distribution" />
-									<combo id="ld${ch}" />
-								</grid>
-								
-								<grid rows="9" cols="2" bg.color="bg_schema" visibility=":nt${ch} ieq 3">
-									<cell cols="2"><label text="labels.noise_generator.type"/></cell>
-									<cell cols="2"><combo id="vt${ch}" /></cell>
-									
-									<cell cols="2"><label text="labels.noise_generator.window"/></cell>
-									<knob id="vw${ch}" scolor.hue="${hue}" />
-									<value id="vw${ch}" same_line="true" />
-									
-									<cell cols="2">
-										<label text="labels.noise_generator.arn_delta" visibility=":vt${ch} ieq 2" />
-									</cell>
-									<knob id="vd${ch}" visibility=":vt${ch} ieq 2" scolor.hue="${hue}" />
-									<value id="vd${ch}" visibility=":vt${ch} ieq 2" same_line="true" />
-									
-									<cell cols="2">
-										<button
-											id="velcs_1"
-											ui:inject="Button_Cycle"
-											text="labels.noise_generator.crush"
-										/>
-									</cell>
-									
-									<cell cols="2"><label text="labels.noise_generator.crush_prob"/></cell>
-									<knob id="vp${ch}" scolor.hue="${hue}" />
-									<value id="vp${ch}" same_line="true" />
-								</grid>
-							</vbox>
-						</cell>
-	
-						<!-- Offset -->
-						<knob id="no${ch}" scolor="(:nt${ch} igt 0) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" pad.t="6"/>
-						<value id="no${ch}" width.min="40" detailed="false" pad.t="3" pad.b="6"/>
-						
-						<!-- Output level meter -->
-						<cell rows="6">
-							<vbox bg.color="bg">
-								<label text="labels.chan.out" />
-								<ledmeter angle="1">
-									<ledchannel
-										id="nlm_${i}"
-										min="-72 db"
-										max="12 db"
-										log="true"
-										type="rms_peak"
-										peak.visibility="true"
-										value.color="mono"
-										value.color.hue="${hue}"
-									/>
-								</ledmeter>
-							</vbox>
-						</cell>
-						
-					</ui:with>
-				</ui:for>
-			</grid>
-		</group>
-		
-		<group text="labels.noise_generator.signal" ipdadding="0" fill="true">
-			<grid rows="${:channels*2 + 2}" cols="${9 + (:channels > 1)}">
-				<!-- row 1 -->
-				<cell rows="2"><void /></cell>
-				<cell rows="2"><label text="labels.chan.input" /></cell>
-				<cell cols="4">
-					<label text="labels.noise_generator.generators" />
+					<cell bg.color="bg" pad.v="2" vreduce="true" vexpand="false" >
+						<hsep/>
+					</cell>
+
+					<button
+						id="velcs_1"
+						text="labels.noise_generator.crush"
+						ui:inject="Button_Cycle"
+						size="22"
+						font.size="10"
+						down.color.hue="${hue}"
+						down.hover.color.hue="${hue}"
+						text.down.color.hue="${hue}"
+						text.down.hover.color.hue="${hue}"
+						border.down.color.hue="${hue}"
+						border.down.hover.color.hue="${hue}"
+						pad.r="6"
+						fill="true"
+						expand="true"
+						bright="(:nt${ch} ieq 3) ? 1 : 0.75"
+						bg.bright="(:nt${ch} ieq 3) ? 1.0 : :const_bg_darken"
+						/>
+
+
+
+					<cell rows="7" bg.color="bg" pad.h="2" hreduce="true" hexpand="false">
+						<void/>
+					</cell>
+
+					<cell rows="7" >
+						<grid rows="5" cols="3">
+
+							<vbox fill="false">
+							<label text="labels.noise_generator.amp_litude" />
+							<knob id="na${ch}" scolor="(:nt${ch} igt 0) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" />
+							<value id="na${ch}"  detailed="false" precision="1"/>
+						</vbox>
+						<void/>
+					<vbox fill="false">
+					<label text="labels.noise_generator.offs_et" />
+					<knob id="no${ch}" scolor="(:nt${ch} igt 0) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" />
+					<value id="no${ch}"  detailed="false" precision="1"/>
+				</vbox>
+
+				<cell cols="3" bg.color="bg" pad.v="2" vreduce="true" vexpand="false">
+					<void/>
 				</cell>
-				<cell rows="2"><label text="labels.noise_generator.mode" /></cell>
-				<ui:if test=":channels > 1">
-					<cell rows="2"><label text="labels.noise_generator.settings" /></cell>
-				</ui:if>
-				<cell rows="2" cols="2"><label text="labels.chan.output" /></cell>
-				
-				<!-- row 2 -->
-				<ui:for id="i" first="1" count="4">
-					<label text="labels.chan.id" text:id="${i}" />
-				</ui:for>
-				
-				<ui:for id="i" first="1" count=":channels">
-					<ui:set id="hue" value="${(:i-1.0)/:channels}"/>
-					
-					<!-- row -->
-					<label text="labels.chan.id" text:id="${i}" />
-					<ledmeter hexpand="true" angle="0">
-						<ledchannel id="ilm_${i}"
-							min="-72 db" max="+24 db" log="true" type="rms_peak"
-							peak.visibility="true"
-							value.color="mono_in" value.color.hue="${hue}"
-						/>
-					</ledmeter>
-					
-					<ui:for id="j" first="1" count="4">
-						<knob id="gg${j}_${i}" scolor.hue="${hue}" />
-					</ui:for>
-					<combo id="cm_${i}" />
-					<ui:if test=":channels > 1">
-						<hbox>
-							<button
-								id="chs_${i}"
-								text="labels.chan.S_olo"
-								ui:inject="Button_Cycle"
-								size="22"
-								font.size="10"
-								down.color.hue="${hue}"
-								down.hover.color.hue="${hue}"
-								text.down.color.hue="${hue}"
-								text.down.hover.color.hue=":${hue}"
-								border.down.color.hue="${hue}"
-								border.down.hover.color.hue="${hue}"
-								pad.r="6"
-								expand="false" />
-							<button
-								id="chm_${i}"
-								text="labels.chan.M_ute"
-								ui:inject="Button_Cycle"
-								size="22"
-								font.size="10"
-								down.color.hue="${hue}"
-								down.hover.color.hue="${hue}"
-								text.down.color.hue="${hue}"
-								text.down.hover.color.hue="${hue}"
-								border.down.color.hue="${hue}"
-								border.down.hover.color.hue="${hue}"
-								pad.r="6"
-								expand="false" />
-						</hbox>
-					</ui:if>
-					
-					<knob id="gout_${i}" scolor.hue="${hue}" />
-					
-					<ledmeter hexpand="true" angle="0">
-						<ledchannel id="olm_${i}"
-							min="-72 db" max="+24 db" log="true" type="rms_peak"
-							peak.visibility="true"
-							value.color="mono_out" value.color.hue="${hue}"
-						/>
-					</ledmeter>
-					
-					<!-- row -->
-					<cell cols="2"><void /></cell>
-					<ui:for id="j" first="1" count="4">
-						<value id="gg${j}_${i}" same_line="true" />
-					</ui:for>
-					<cell cols="${1 + (:channels > 1)}"><void /></cell>
-					<value id="gout_${i}" same_line="true" />
-					<void />
-				</ui:for>
-			</grid>
-		</group>
-	
+<ui:with bright="(:cs${ch} igt 4 and :nt${ch} igt 0) ? 1 : 0.75"
+bg.bright="(:cs${ch} igt 4 and :nt${ch} igt 0) ? 1.0 : :const_bg_darken"
+scolor="(:cs${ch} igt 4 and :nt${ch} igt 0) ? 'cycle' : 'cycle_inactive'">
+				<vbox fill="false" >
+				<label text="labels.noise_generator.CuSToM" />
+				<hbox >
+					<knob id="csn${ch}" scolor.hue="${hue}" visibility=":cs${ch} ilt 6"/>
+					<knob id="cso${ch}" scolor.hue="${hue}" visibility=":cs${ch} ieq 6"/>
+					<knob id="csd${ch}" scolor.hue="${hue}" visibility=":cs${ch} ieq 7"/>
+				</hbox>
+				<hbox>
+					<value id="csn${ch}" same_line="true" visibility=":cs${ch} ilt 6"/>
+					<value id="cso${ch}" same_line="true" visibility=":cs${ch} ieq 6"/>
+					<value id="csd${ch}" same_line="true" visibility=":cs${ch} ieq 7"/>
+				</hbox>
+			</vbox>
+		</ui:with>
+
+			<cell rows="3" bg.color="bg" pad.h="2" hreduce="true" hexpand="false">
+				<void/>
+			</cell>
+			<ui:with bright="(:nt${ch} ieq 3) ? 1 : 0.75"
+			bg.bright="(:nt${ch} ieq 3) ? 1.0 : :const_bg_darken">
+			<vbox fill="false">
+			<label text="labels.noise_generator.window"/>
+			<knob id="vw${ch}" scolor="(:nt${ch} ieq 3) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" />
+			<value id="vw${ch}"  detailed="false" precision="1"/>
+		</vbox>
+	</ui:with>
+
+		<cell bg.color="bg" pad.v="2" vreduce="true" vexpand="false">
+			<void/>
+		</cell>
+
+		<cell bg.color="bg" pad.v="2" vreduce="true" vexpand="false">
+			<void/>
+		</cell>
+		<ui:with bright="(:vt${ch} ieq 2 and :nt${ch} ieq 3) ? 1 : 0.75"
+		bg.bright="(:vt${ch} ieq 2 and :nt${ch} ieq 3) ? 1.0 : :const_bg_darken">
+		<vbox fill="false">
+		<label text="labels.noise_generator.arn_delta" />
+		<knob id="vd${ch}" scolor="(:vt${ch} ieq 2 and :nt${ch} ieq 3) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" />
+		<value id="vd${ch}"  detailed="false" precision="1"/>
 	</vbox>
+		</ui:with>
+
+
+		<ui:with bright="(:nt${ch} ieq 3) ? 1 : 0.75"
+		bg.bright="(:nt${ch} ieq 3) ? 1.0 : :const_bg_darken">
+	<vbox fill="false">
+	<label text="labels.noise_generator.crush_prob" />
+	<knob id="vp${ch}" scolor="(:nt${ch} ieq 3) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20" />
+	<value id="vp${ch}"  detailed="false" precision="1"/>
+</vbox>
+</ui:with>
+
+						</grid>
+					</cell>
+
+					<cell rows="7" bg.color="bg" pad.h="2" hreduce="true" hexpand="false">
+						<void width.max="0"/>
+					</cell>
+
+					<cell rows="7" bg.color="red" hexpand="false">
+						<ledmeter vexpand="true" angle="1" >
+							<ledchannel
+								id="nlm_${i}"
+								min="-72 db"
+								max="12 db"
+								log="true"
+								type="rms_peak"
+								peak.visibility="true"
+								value.color="mono"
+								value.color.hue="${hue}"
+							/>
+						</ledmeter>
+					</cell>
+
+				</ui:with>
+			</ui:for>
+
+	</grid>
+	</group>
+		</cell>
+	</grid>
+
 </plugin>

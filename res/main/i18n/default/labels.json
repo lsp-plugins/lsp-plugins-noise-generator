@@ -2,16 +2,22 @@
 	"noise_generator": {
 		"Ina_udible": "Ina",
 		"arn_delta": "ARN Delta",
-		"amplitude_offset": "Amplitude,\nOffset",
+		"amp_litude": "Amp",
+		"amplitude": "Amplitude",
 		"color": "Color",
 		"crush": "Crush",
 		"crush_prob": "Crush prob",
+		"CuSToM": "Cstm",
 		"generators": "Generators",
 		"inaudible": "Inaudible",
 		"mode": "Mode",
+		"number_#": "#",
+		"offs_et": "Offs",
+		"offset": "Offset",
 		"settings": "Settings",
 		"signal": "Signal",
 		"type": "Type",
+		"velvet_type": "Velvet Type",
 		"window": "Window"
 	}
 }
