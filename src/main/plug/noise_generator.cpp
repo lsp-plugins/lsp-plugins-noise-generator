@@ -81,10 +81,14 @@ namespace lsp
             vTemp           = NULL;
             vFreqs          = NULL;
             vFreqChart      = NULL;
+            fGainIn         = GAIN_AMP_0_DB;
+            fGainOut        = GAIN_AMP_0_DB;
             pData           = NULL;
             pIDisplay       = NULL;
 
             pBypass         = NULL;
+            pGainIn         = NULL;
+            pGainOut        = NULL;
         }
 
         noise_generator::~noise_generator()
@@ -319,6 +323,8 @@ namespace lsp
             // Bind global ports
             lsp_trace("Binding global control ports");
             pBypass                     = TRACE_PORT(ports[port_id++]);
+            pGainIn                     = TRACE_PORT(ports[port_id++]);
+            pGainOut                    = TRACE_PORT(ports[port_id++]);
             TRACE_PORT(ports[port_id++]);   // Skip 'Zoom' control
 
             // Bind generator ports
@@ -476,6 +482,9 @@ namespace lsp
             }
 
             // Update the configuration of each output channel
+            fGainIn                 = pGainIn->value();
+            fGainOut                = pGainOut->value();
+
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
@@ -619,8 +628,9 @@ namespace lsp
                 {
                     channel_t *c            = &vChannels[i];
 
-                    // Measure input level
-                    float level             = dsp::abs_max(c->vIn, to_do);
+                    // Apply input gain and measure the input level
+                    dsp::mul_k3(vTemp, c->vIn, fGainIn, to_do);
+                    float level             = dsp::abs_max(vTemp, to_do);
                     c->pMeterIn->set_value(level);
 
                     // Apply matrix to the temporary buffer
@@ -638,14 +648,15 @@ namespace lsp
                     // Now we have mixed output from generators, apply special mode to input
                     switch (c->enMode)
                     {
-                        case CH_MODE_ADD:   dsp::fmadd_k3(vBuffer, c->vIn, c->fGainOut, to_do); break;
-                        case CH_MODE_MULT:  dsp::fmmul_k3(vBuffer, c->vIn, c->fGainOut, to_do); break;
+                        case CH_MODE_ADD:   dsp::fmadd_k3(vBuffer, vTemp, c->fGainOut, to_do); break;
+                        case CH_MODE_MULT:  dsp::fmmul_k3(vBuffer, vTemp, c->fGainOut, to_do); break;
                         case CH_MODE_OVERWRITE:
                         default:
                             break;
                     }
 
-                    // Measure output level
+                    // Apply output gain and measure output level
+                    dsp::mul_k2(vBuffer, fGainOut, to_do);
                     level                   = dsp::abs_max(vBuffer, to_do);
                     c->pMeterOut->set_value(level);
 
@@ -892,8 +903,15 @@ namespace lsp
             v->write("vTemp", vTemp);
             v->write("vFreqs", vFreqs);
             v->write("vFreqChart", vFreqChart);
+            v->write("fGainIn", fGainIn);
+            v->write("fGainOut", fGainOut);
             v->write("pData", pData);
             v->write_object("pIDisplay", pIDisplay);
+
+            // Dump global ports
+            v->write("pBypass", pBypass);
+            v->write("pGainIn", pGainIn);
+            v->write("pGainOut", pGainOut);
         }
 
     } /* namespace plugins */

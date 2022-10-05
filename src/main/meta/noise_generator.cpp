@@ -143,12 +143,14 @@ namespace lsp
             CHANNEL_CONTROLS(id, label, g1, g2, g3, g4)
 
         #define NG_COMMON \
+            BYPASS, \
+            AMP_GAIN("g_in", "Input gain", noise_generator::IN_GAIN_DFL, 10.0f), \
+            AMP_GAIN("g_out", "Output gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
             LOG_CONTROL("zoom", "Graph zoom", U_GAIN_AMP, noise_generator::ZOOM)
 
         static const port_t noise_generator_x1_ports[] =
         {
             CHANNEL_AUDIO_PORTS("_1", " 1"),
-            BYPASS,
             NG_COMMON,
 
             GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
@@ -165,7 +167,6 @@ namespace lsp
         {
             CHANNEL_AUDIO_PORTS("_1", " 1"),
             CHANNEL_AUDIO_PORTS("_2", " 2"),
-            BYPASS,
             NG_COMMON,
 
             GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
@@ -185,7 +186,6 @@ namespace lsp
             CHANNEL_AUDIO_PORTS("_2", " 2"),
             CHANNEL_AUDIO_PORTS("_3", " 3"),
             CHANNEL_AUDIO_PORTS("_4", " 4"),
-            BYPASS,
             NG_COMMON,
 
             GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),

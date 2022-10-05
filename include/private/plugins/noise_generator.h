@@ -128,9 +128,14 @@ namespace lsp
                 float                      *vTemp;              // Additional buffer for audio processing
                 float                      *vFreqs;             // Frequency list
                 float                      *vFreqChart;         // Temporary buffer for frequency chart
+                float                       fGainIn;            // Overall input gain
+                float                       fGainOut;           // Overall output gain
                 uint8_t                    *pData;              // Allocated data
                 core::IDBuffer             *pIDisplay;          // Inline display buffer
+
                 plug::IPort                *pBypass;            // Bypass
+                plug::IPort                *pGainIn;            // Input gain
+                plug::IPort                *pGainOut;           // Output gain
 
             public:
                 explicit noise_generator(const meta::plugin_t *meta);

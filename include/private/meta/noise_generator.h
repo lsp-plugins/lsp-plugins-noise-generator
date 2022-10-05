@@ -68,7 +68,8 @@ namespace lsp
             static constexpr float  NOISE_COLOR_SLOPE_DBD_DFL 	= -10.0f;  // Pink
             static constexpr float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
 
-            static constexpr size_t MESH_POINTS                 = 640;
+            static constexpr float  IN_GAIN_DFL                 = 1.0f;
+            static constexpr float  OUT_GAIN_DFL                = 1.0f;
 
             static constexpr float  NOISE_AMPLITUDE_DFL			= 1.0f;
 
@@ -78,6 +79,7 @@ namespace lsp
             static constexpr float  NOISE_OFFSET_STEP			= 0.1f;
 
             static constexpr size_t NUM_GENERATORS              = 4;
+            static constexpr size_t MESH_POINTS                 = 640;
 
             enum noise_type_selector_t
             {

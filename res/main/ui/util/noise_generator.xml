@@ -232,7 +232,7 @@
 
 		<vbox spacing="4">
 			<group text="groups.signal" expand="true">
-				<grid rows="3" cols="2" hspacing="4">
+				<grid rows="2" cols="2" hspacing="4">
 					<knob id="g_in" pad.r="4"/>
 					<vbox vfill="false">
 						<label text="labels.input" halign="0"/>
@@ -244,13 +244,6 @@
 						<label text="labels.output" expand="true" halign="0"/>
 						<value id="g_out" width.min="50" sline="true" halign="0"/>
 					</vbox>
-
-					<knob id="bal" balance="0.5" scolor="balance" pad.r="4"/>
-					<vbox vfill="false">
-						<label text="labels.balance" halign="0"/>
-						<value id="bal" width.min="50" sline="true" halign="0"/>
-					</vbox>
-
 				</grid>
 			</group>
 			<group text="groups.analysis" expand="true">
