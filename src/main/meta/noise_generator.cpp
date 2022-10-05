@@ -142,10 +142,14 @@ namespace lsp
             SWITCH("chm" id, "Channel Mute" label, 0.0f), \
             CHANNEL_CONTROLS(id, label, g1, g2, g3, g4)
 
+        #define NG_COMMON \
+            LOG_CONTROL("zoom", "Graph zoom", U_GAIN_AMP, noise_generator::ZOOM)
+
         static const port_t noise_generator_x1_ports[] =
         {
             CHANNEL_AUDIO_PORTS("_1", " 1"),
             BYPASS,
+            NG_COMMON,
 
             GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
             GENERATOR_CONTROLS("_2", " 2", noise_generator::NOISE_TYPE_OFF),
@@ -162,6 +166,7 @@ namespace lsp
             CHANNEL_AUDIO_PORTS("_1", " 1"),
             CHANNEL_AUDIO_PORTS("_2", " 2"),
             BYPASS,
+            NG_COMMON,
 
             GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
             GENERATOR_CONTROLS("_2", " 2", noise_generator::NOISE_TYPE_DFL),
@@ -181,6 +186,7 @@ namespace lsp
             CHANNEL_AUDIO_PORTS("_3", " 3"),
             CHANNEL_AUDIO_PORTS("_4", " 4"),
             BYPASS,
+            NG_COMMON,
 
             GENERATOR_CONTROLS("_1", " 1", noise_generator::NOISE_TYPE_DFL),
             GENERATOR_CONTROLS("_2", " 2", noise_generator::NOISE_TYPE_DFL),

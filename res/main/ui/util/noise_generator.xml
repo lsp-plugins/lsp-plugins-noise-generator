@@ -23,6 +23,12 @@
 					<ui:for id="g" first="-36" last="36" step="24">
 						<marker v="${g} db" ox="1" oy="0" color="graph_alt_1"/>
 					</ui:for>
+					<ui:for id="g" first="-18" last="18" step="12">
+						<marker v="${g} db" ox="1" oy="0" color="graph_alt_1" visibility=":zoom le -18 db"/>
+					</ui:for>
+					<ui:for id="g" first="-9" last="9" step="6">
+						<marker v="${g} db" ox="1" oy="0" color="graph_alt_1" visibility=":zoom le -33 db"/>
+					</ui:for>
 
 					<!-- Yellow grid -->
 					<ui:with ox="0" oy="1" color="graph_sec">
@@ -52,7 +58,7 @@
 
 					<!-- Axis -->
 					<axis min="10" max="24000" color="graph_prim" angle="0.0" log="true" visibility="false"/>
-					<axis min="-48 db" max="48 db" color="graph_prim" angle="0.5" log="true" visibility="false"/>
+					<axis min="-48 db / :zoom" max="48 db * :zoom" color="graph_prim" angle="0.5" log="true" visibility="false"/>
 					<!-- -48..+48 dB -->
 					<axis min="-1" max="1" visible="false" angle="0.5"/>
 
@@ -83,6 +89,18 @@
 						<text y="-24 db" text="-24" valign="1"/>
 						<text y="-36 db" text="-36" valign="1"/>
 						<text y="1" ox="0" oy="2" text="graph.units.db" valign="-1"/>
+					</ui:with>
+					<ui:with x="10" halign="1" visibility=":zoom le -18 db">
+						<text y="18 db" text="+18" valign="-1"/>
+						<text y="6 db" text="+6" valign="-1"/>
+						<text y="-6 db" text="-6" valign="1"/>
+						<text y="-18 db" text="-18" valign="1"/>
+					</ui:with>
+					<ui:with x="10" halign="1" visibility=":zoom le -33 db">
+						<text y="9 db" text="+9" valign="-1"/>
+						<text y="3 db" text="+3" valign="-1"/>
+						<text y="-3 db" text="-3" valign="1"/>
+						<text y="-9 db" text="-9" valign="1"/>
 					</ui:with>
 				</graph>
 			</group>

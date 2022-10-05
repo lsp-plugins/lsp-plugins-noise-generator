@@ -319,6 +319,7 @@ namespace lsp
             // Bind global ports
             lsp_trace("Binding global control ports");
             pBypass                     = TRACE_PORT(ports[port_id++]);
+            TRACE_PORT(ports[port_id++]);   // Skip 'Zoom' control
 
             // Bind generator ports
             lsp_trace("Binding generator ports");

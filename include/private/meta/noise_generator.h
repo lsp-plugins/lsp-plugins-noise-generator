@@ -33,6 +33,11 @@ namespace lsp
     {
         typedef struct noise_generator_metadata
         {
+            static constexpr float  ZOOM_MIN                    = GAIN_AMP_M_36_DB;
+            static constexpr float  ZOOM_MAX                    = GAIN_AMP_0_DB;
+            static constexpr float  ZOOM_DFL                    = GAIN_AMP_0_DB;
+            static constexpr float  ZOOM_STEP                   = 0.025f;
+
             static constexpr float  VELVET_WINDOW_DURATION_MIN	= 0.0f;
             static constexpr float  VELVET_WINDOW_DURATION_MAX  = 0.1f;
             static constexpr float  VELVET_WINDOW_DURATION_DFL 	= 0.0f;
