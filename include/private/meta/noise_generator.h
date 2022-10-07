@@ -22,6 +22,8 @@
 #ifndef PRIVATE_META_NOISE_GENERATOR_H_
 #define PRIVATE_META_NOISE_GENERATOR_H_
 
+#include <lsp-plug.in/dsp-units/misc/envelope.h>
+#include <lsp-plug.in/dsp-units/misc/windows.h>
 #include <lsp-plug.in/plug-fw/meta/types.h>
 #include <lsp-plug.in/plug-fw/const.h>
 
@@ -71,6 +73,16 @@ namespace lsp
             static constexpr float  IN_GAIN_DFL                 = 1.0f;
             static constexpr float  OUT_GAIN_DFL                = 1.0f;
 
+            static constexpr size_t FFT_RANK                    = 13;
+            static constexpr size_t FFT_ITEMS                   = 1 << FFT_RANK;
+            static constexpr size_t FFT_WINDOW                  = lsp::dspu::windows::HANN;
+            static constexpr size_t FFT_ENVELOPE                = lsp::dspu::envelope::PINK_NOISE;
+            static constexpr size_t FFT_REFRESH_RATE            = 20;
+            static constexpr float  FFT_REACT_TIME_MIN          = 0.000f;
+            static constexpr float  FFT_REACT_TIME_MAX          = 1.000f;
+            static constexpr float  FFT_REACT_TIME_DFL          = 0.200f;
+            static constexpr float  FFT_REACT_TIME_STEP         = 0.001f;
+
             static constexpr float  NOISE_AMPLITUDE_DFL			= 1.0f;
 
             static constexpr float  NOISE_OFFSET_MIN			= -10.0f;
@@ -78,6 +90,7 @@ namespace lsp
             static constexpr float  NOISE_OFFSET_DFL 			= 0.0f;
             static constexpr float  NOISE_OFFSET_STEP			= 0.1f;
 
+            static constexpr size_t CHANNELS_MAX                = 4;
             static constexpr size_t NUM_GENERATORS              = 4;
             static constexpr size_t MESH_POINTS                 = 640;
 

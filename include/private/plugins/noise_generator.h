@@ -25,6 +25,7 @@
 #include <lsp-plug.in/dsp-units/ctl/Bypass.h>
 #include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
 #include <lsp-plug.in/dsp-units/noise/Generator.h>
+#include <lsp-plug.in/dsp-units/util/Analyzer.h>
 #include <lsp-plug.in/plug-fw/plug.h>
 #include <lsp-plug.in/plug-fw/core/IDBuffer.h>
 
@@ -91,6 +92,7 @@ namespace lsp
                     plug::IPort            *pCslopeNPN;         // Colour Slope [Neper-per-Neper]
                     plug::IPort            *pCslopeDBO;         // Colour Slope [dB-per-Octave]
                     plug::IPort            *pCslopeDBD;         // Colour Slope [dB-per-Decade]
+                    plug::IPort            *pFft;               // FFT analysis flag
                     plug::IPort            *pMeterOut;          // Output level meter
                     plug::IPort            *pMsh;               // Mesh for Filter Frequency Chart Plot
                 } generator_t;
@@ -105,6 +107,7 @@ namespace lsp
                     float                   vGain[meta::noise_generator::NUM_GENERATORS];   // Gain for each generator
                     float                   fGainOut;           // Output gain
                     bool                    bActive;            // Activity flag
+                    float                  *vBuffer;            // Temporary buffer for processing data
                     float                  *vIn;                // Input buffer pointer
                     float                  *vOut;               // Output buffer pointer
 
@@ -113,6 +116,8 @@ namespace lsp
                     plug::IPort            *pOut;               // Output port
                     plug::IPort            *pSlSw;              // Solo Switch
                     plug::IPort            *pMtSw;              // Mute Switch
+                    plug::IPort            *pFftIn;             // Input FFT analysis flag
+                    plug::IPort            *pFftOut;            // Output FFT analysis flag
                     plug::IPort            *pNoiseMode;         // Output Mode Selector
                     plug::IPort            *pGain[meta::noise_generator::NUM_GENERATORS];   // Generator input matrix
                     plug::IPort            *pGainOut;           // Output gain
@@ -122,10 +127,10 @@ namespace lsp
 
             protected:
                 generator_t                 vGenerators[meta::noise_generator::NUM_GENERATORS];
+                dspu::Analyzer              sAnalyzer;          // Spectrum analyzer
                 size_t                      nChannels;          // Number of channels
                 channel_t                  *vChannels;          // Noise Generator channels
-                float                      *vBuffer;            // Temporary buffer for audio processing
-                float                      *vTemp;              // Additional buffer for audio processing
+                float                      *vTemp;              // Temporary buffer for audio processing
                 float                      *vFreqs;             // Frequency list
                 float                      *vFreqChart;         // Temporary buffer for frequency chart
                 float                       fGainIn;            // Overall input gain
@@ -136,6 +141,11 @@ namespace lsp
                 plug::IPort                *pBypass;            // Bypass
                 plug::IPort                *pGainIn;            // Input gain
                 plug::IPort                *pGainOut;           // Output gain
+                plug::IPort                *pFftIn;             // Input FFT analysis
+                plug::IPort                *pFftOut;            // Output FFT analysis
+                plug::IPort                *pFftGen;            // FFT generator analysis
+                plug::IPort                *pReactivity;        // FFT reactivity
+                plug::IPort                *pShiftGain;         // FFT gain shift
 
             public:
                 explicit noise_generator(const meta::plugin_t *meta);

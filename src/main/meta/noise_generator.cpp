@@ -124,8 +124,9 @@ namespace lsp
             LCG_CONTROLS(id, label), \
             VELVET_CONTROLS(id, label), \
             COLOR_CONTROLS(id, label), \
-            METER_GAIN("nlm" id, "Noise Level Meter", GAIN_AMP_P_24_DB), \
-            MESH("nsg" id, "Noise Spectrum Graph", 2, noise_generator::MESH_POINTS + 4)
+            SWITCH("fftg" id, "Generator Output FFT Analysis" label, 1), \
+            METER_GAIN("nlm" id, "Noise Level Meter" label, GAIN_AMP_P_24_DB), \
+            MESH("nsg" id, "Noise Spectrum Graph" label, 2, noise_generator::MESH_POINTS + 4)
 
         #define CHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
             COMBO("cm" id, "Channel Mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
@@ -140,13 +141,20 @@ namespace lsp
         #define MCHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
             SWITCH("chs" id, "Channel Solo" label, 0.0f), \
             SWITCH("chm" id, "Channel Mute" label, 0.0f), \
+            SWITCH("ffti" id, "Input Signal FFT Analysis" label, 0.0f), \
+            SWITCH("ffto" id, "Output Signal FFT Analysis" label, 0.0f), \
             CHANNEL_CONTROLS(id, label, g1, g2, g3, g4)
 
         #define NG_COMMON \
             BYPASS, \
-            AMP_GAIN("g_in", "Input gain", noise_generator::IN_GAIN_DFL, 10.0f), \
-            AMP_GAIN("g_out", "Output gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
-            LOG_CONTROL("zoom", "Graph zoom", U_GAIN_AMP, noise_generator::ZOOM)
+            AMP_GAIN("g_in", "Input Gain", noise_generator::IN_GAIN_DFL, 10.0f), \
+            AMP_GAIN("g_out", "Output Gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
+            LOG_CONTROL("zoom", "Graph Zoom", U_GAIN_AMP, noise_generator::ZOOM), \
+            SWITCH("ffti", "Input Signal FFT Analysis", 0.0f), \
+            SWITCH("ffto", "Output Signal FFT Analysis", 0.0f), \
+            SWITCH("fftg", "Generator Output Signal FFT Analysis", 1.0f), \
+            LOG_CONTROL("react", "FFT Reactivity", U_MSEC, noise_generator::FFT_REACT_TIME), \
+            AMP_GAIN("shift", "FFT Shift Gain", 1.0f, 100.0f) \
 
         static const port_t noise_generator_x1_ports[] =
         {
