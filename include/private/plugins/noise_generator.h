@@ -95,6 +95,7 @@ namespace lsp
                     plug::IPort            *pFft;               // FFT analysis flag
                     plug::IPort            *pMeterOut;          // Output level meter
                     plug::IPort            *pMsh;               // Mesh for Filter Frequency Chart Plot
+                    plug::IPort            *pSpectrum;          // Spectrum graph
                 } generator_t;
 
                 typedef struct channel_t
@@ -105,9 +106,11 @@ namespace lsp
                     // Parameters
                     ch_mode_t               enMode;             // The Channel Mode
                     float                   vGain[meta::noise_generator::NUM_GENERATORS];   // Gain for each generator
+                    float                   fGainIn;            // Input gain
                     float                   fGainOut;           // Output gain
                     bool                    bActive;            // Activity flag
-                    float                  *vBuffer;            // Temporary buffer for processing data
+                    float                  *vInBuffer;          // Temporary buffer for processing data
+                    float                  *vOutBuffer;         // Temporary buffer for processing data
                     float                  *vIn;                // Input buffer pointer
                     float                  *vOut;               // Output buffer pointer
 
@@ -120,9 +123,12 @@ namespace lsp
                     plug::IPort            *pFftOut;            // Output FFT analysis flag
                     plug::IPort            *pNoiseMode;         // Output Mode Selector
                     plug::IPort            *pGain[meta::noise_generator::NUM_GENERATORS];   // Generator input matrix
+                    plug::IPort            *pGainIn;            // Input gain
                     plug::IPort            *pGainOut;           // Output gain
                     plug::IPort            *pMeterIn;           // Input level meter
                     plug::IPort            *pMeterOut;          // Output level meter
+                    plug::IPort            *pSpectrumIn;        // Input spectrum analysis
+                    plug::IPort            *pSpectrumOut;       // Output spectrum analysis
                 } channel_t;
 
             protected:
@@ -130,8 +136,8 @@ namespace lsp
                 dspu::Analyzer              sAnalyzer;          // Spectrum analyzer
                 size_t                      nChannels;          // Number of channels
                 channel_t                  *vChannels;          // Noise Generator channels
-                float                      *vTemp;              // Temporary buffer for audio processing
                 float                      *vFreqs;             // Frequency list
+                uint32_t                   *vIndexes;           // Frequency indexes
                 float                      *vFreqChart;         // Temporary buffer for frequency chart
                 float                       fGainIn;            // Overall input gain
                 float                       fGainOut;           // Overall output gain

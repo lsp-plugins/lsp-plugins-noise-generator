@@ -126,7 +126,8 @@ namespace lsp
             COLOR_CONTROLS(id, label), \
             SWITCH("fftg" id, "Generator Output FFT Analysis" label, 1), \
             METER_GAIN("nlm" id, "Noise Level Meter" label, GAIN_AMP_P_24_DB), \
-            MESH("nsg" id, "Noise Spectrum Graph" label, 2, noise_generator::MESH_POINTS + 4)
+            MESH("nsc" id, "Noise Spectrum Chart" label, 2, noise_generator::MESH_POINTS + 4), \
+            MESH("nsg" id, "Noise Spectrum Graph" label, 2, noise_generator::MESH_POINTS)
 
         #define CHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
             COMBO("cm" id, "Channel Mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
@@ -134,15 +135,18 @@ namespace lsp
             AMP_GAIN100("gg2" id, "Generator 2 Gain" label, g2), \
             AMP_GAIN100("gg3" id, "Generator 3 Gain" label, g3), \
             AMP_GAIN100("gg4" id, "Generator 4 Gain" label, g4), \
+            AMP_GAIN100("gin" id, "Input gain" label, GAIN_AMP_0_DB), \
             AMP_GAIN100("gout" id, "Output gain" label, GAIN_AMP_0_DB), \
             METER_GAIN("ilm" id, "Input Level Meter" label, GAIN_AMP_P_24_DB), \
-            METER_GAIN("olm" id, "Output Level Meter" label, GAIN_AMP_P_24_DB)
+            METER_GAIN("olm" id, "Output Level Meter" label, GAIN_AMP_P_24_DB), \
+            MESH("isg" id, "Input Spectrum Graph" label, 2, noise_generator::MESH_POINTS), \
+            MESH("osg" id, "Output Spectrum Graph" label, 2, noise_generator::MESH_POINTS)
 
         #define MCHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
             SWITCH("chs" id, "Channel Solo" label, 0.0f), \
             SWITCH("chm" id, "Channel Mute" label, 0.0f), \
-            SWITCH("ffti" id, "Input Signal FFT Analysis" label, 0.0f), \
-            SWITCH("ffto" id, "Output Signal FFT Analysis" label, 0.0f), \
+            SWITCH("ffti" id, "Input Signal FFT Analysis" label, 1.0f), \
+            SWITCH("ffto" id, "Output Signal FFT Analysis" label, 1.0f), \
             CHANNEL_CONTROLS(id, label, g1, g2, g3, g4)
 
         #define NG_COMMON \

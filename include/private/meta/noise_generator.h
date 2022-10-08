@@ -76,7 +76,7 @@ namespace lsp
             static constexpr size_t FFT_RANK                    = 13;
             static constexpr size_t FFT_ITEMS                   = 1 << FFT_RANK;
             static constexpr size_t FFT_WINDOW                  = lsp::dspu::windows::HANN;
-            static constexpr size_t FFT_ENVELOPE                = lsp::dspu::envelope::PINK_NOISE;
+            static constexpr size_t FFT_ENVELOPE                = lsp::dspu::envelope::WHITE_NOISE;
             static constexpr size_t FFT_REFRESH_RATE            = 20;
             static constexpr float  FFT_REACT_TIME_MIN          = 0.000f;
             static constexpr float  FFT_REACT_TIME_MAX          = 1.000f;

@@ -77,8 +77,8 @@ namespace lsp
 
             // Initialize other parameters
             vChannels       = NULL;
-            vTemp           = NULL;
             vFreqs          = NULL;
+            vIndexes        = NULL;
             vFreqChart      = NULL;
             fGainIn         = GAIN_AMP_0_DB;
             fGainOut        = GAIN_AMP_0_DB;
@@ -216,13 +216,13 @@ namespace lsp
              * 1X Frequency Chart of Channel (MESH_POINTS)
              */
             size_t buf_sz           = align_size(BUFFER_SIZE * sizeof(float), OPTIMAL_ALIGN);
+            size_t idx_sz           = align_size(BUFFER_SIZE * sizeof(uint32_t), OPTIMAL_ALIGN);
             size_t chr_sz           = align_size(meta::noise_generator::MESH_POINTS *  sizeof(float), OPTIMAL_ALIGN);
             size_t gen_sz           = (chr_sz + buf_sz) * meta::noise_generator::NUM_GENERATORS;
             size_t alloc            = szof_channels + // vChannels
-                                      buf_sz + // vTemp
-                                      3 * chr_sz + // vFreqs, vFreqChar(2)
+                                      chr_sz + idx_sz + 2 * chr_sz +// vFreqs, vIndexes, vFreqChart[2]
                                       gen_sz + // vGenerators[i].vFreqChart
-                                      nChannels * buf_sz; // vChannels[i].vBuffer
+                                      nChannels * buf_sz * 2; // vChannels[i]: vInBuffer, vOutBuffer
 
             // Allocate memory-aligned data
             uint8_t *ptr            = alloc_aligned<uint8_t>(pData, alloc, OPTIMAL_ALIGN);
@@ -233,9 +233,9 @@ namespace lsp
             // Initialise pointers to channels and temporary buffer
             vChannels               = reinterpret_cast<channel_t *>(ptr);
             ptr                    += szof_channels;
-            vTemp                   = reinterpret_cast<float *>(ptr);
-            ptr                    += buf_sz;
             vFreqs                  = reinterpret_cast<float *>(ptr);
+            ptr                    += idx_sz;
+            vIndexes                = reinterpret_cast<uint32_t *>(ptr);
             ptr                    += chr_sz;
             vFreqChart              = reinterpret_cast<float *>(ptr);
             ptr                    += chr_sz * 2;
@@ -295,6 +295,7 @@ namespace lsp
                 g->pMeterOut            = NULL;
                 g->pFft                 = NULL;
                 g->pMsh                 = NULL;
+                g->pSpectrum            = NULL;
             }
 
             for (size_t i=0; i < nChannels; ++i)
@@ -308,9 +309,12 @@ namespace lsp
                 c->enMode 				= CH_MODE_OVERWRITE;
                 for (size_t j=0; j < meta::noise_generator::NUM_GENERATORS; ++j)
                     c->vGain[j]             = GAIN_AMP_0_DB;
+                c->fGainIn              = GAIN_AMP_0_DB;
                 c->fGainOut             = GAIN_AMP_0_DB;
                 c->bActive              = true;
-                c->vBuffer              = reinterpret_cast<float *>(ptr);
+                c->vInBuffer            = reinterpret_cast<float *>(ptr);
+                ptr                    += buf_sz;
+                c->vOutBuffer           = reinterpret_cast<float *>(ptr);
                 ptr                    += buf_sz;
                 c->vIn                  = NULL;
                 c->vOut                 = NULL;
@@ -325,9 +329,12 @@ namespace lsp
                 c->pNoiseMode           = NULL;
                 for (size_t j=0; j < meta::noise_generator::NUM_GENERATORS; ++j)
                     c->pGain[j]             = NULL;
+                c->pGainIn              = NULL;
                 c->pGainOut             = NULL;
                 c->pMeterIn             = NULL;
                 c->pMeterOut            = NULL;
+                c->pSpectrumIn          = NULL;
+                c->pSpectrumOut         = NULL;
             }
 
             // Bind ports
@@ -384,6 +391,7 @@ namespace lsp
                 g->pFft                 = TRACE_PORT(ports[port_id++]);
                 g->pMeterOut            = TRACE_PORT(ports[port_id++]);
                 g->pMsh                 = TRACE_PORT(ports[port_id++]);
+                g->pSpectrum            = TRACE_PORT(ports[port_id++]);
             }
 
             // Bind channel control ports
@@ -402,9 +410,12 @@ namespace lsp
                 c->pNoiseMode 	        = TRACE_PORT(ports[port_id++]);
                 for (size_t j=0; j<meta::noise_generator::NUM_GENERATORS; ++j)
                     c->pGain[j]             = TRACE_PORT(ports[port_id++]);
+                c->pGainIn              = TRACE_PORT(ports[port_id++]);
                 c->pGainOut             = TRACE_PORT(ports[port_id++]);
                 c->pMeterIn             = TRACE_PORT(ports[port_id++]);
                 c->pMeterOut            = TRACE_PORT(ports[port_id++]);
+                c->pSpectrumIn          = TRACE_PORT(ports[port_id++]);
+                c->pSpectrumOut         = TRACE_PORT(ports[port_id++]);
             }
 
             lsp_assert(ptr <= &guard[alloc]);
@@ -440,8 +451,8 @@ namespace lsp
             }
 
             // Forget about buffers
-            vTemp       = NULL;
             vFreqs      = NULL;
+            vIndexes    = NULL;
             vFreqChart  = NULL;
 
             // Free previously allocated data chunk
@@ -460,15 +471,13 @@ namespace lsp
 
         void noise_generator::update_sample_rate(long sr)
         {
-            // Initialize list of frequencies
-            constexpr float min_freq    = SPEC_FREQ_MIN;
-            float max_freq              = lsp_min(sr * 0.5f, SPEC_FREQ_MAX);
-            float norm                  = logf(max_freq/min_freq) / (meta::noise_generator_metadata::MESH_POINTS - 1);
-            for (size_t i=0; i<meta::noise_generator_metadata::MESH_POINTS; ++i)
-                vFreqs[i]                   = min_freq * expf(i * norm);
-
-            // Update analyzer
+            // Update analyzer and initialize list of frequencies
             sAnalyzer.set_sample_rate(sr);
+            sAnalyzer.get_frequencies(
+                vFreqs, vIndexes,
+                SPEC_FREQ_MIN, lsp_min(sr * 0.5f, SPEC_FREQ_MAX),
+                meta::noise_generator_metadata::MESH_POINTS
+            );
 
             // Update sample rate for channel processors
             for (size_t i=0; i<nChannels; ++i)
@@ -626,6 +635,7 @@ namespace lsp
                 c->enMode               = get_channel_mode(c->pNoiseMode->value());
                 for (size_t j=0; j<meta::noise_generator_metadata::NUM_GENERATORS; ++j)
                     c->vGain[j]             = c->pGain[j]->value();
+                c->fGainIn              = c->pGainIn->value();
                 c->fGainOut             = c->pGainOut->value();
                 c->bActive              = (c_has_solo) ? solo : !mute;
 
@@ -646,6 +656,7 @@ namespace lsp
         void noise_generator::process(size_t samples)
         {
             // Analyzer buffers
+            size_t an_id;
             float *an_buffers[meta::noise_generator_metadata::CHANNELS_MAX * 2 +
                               meta::noise_generator_metadata::NUM_GENERATORS];
 
@@ -699,43 +710,43 @@ namespace lsp
                     channel_t *c            = &vChannels[i];
 
                     // Apply input gain and measure the input level
-                    dsp::mul_k3(vTemp, c->vIn, fGainIn, to_do);
-                    float level             = dsp::abs_max(vTemp, to_do);
+                    dsp::mul_k3(c->vInBuffer, c->vIn, fGainIn * c->fGainIn, to_do);
+                    float level             = dsp::abs_max(c->vInBuffer, to_do);
                     c->pMeterIn->set_value(level);
 
                     // Apply matrix to the temporary buffer
-                    dsp::fill_zero(c->vBuffer, to_do);
+                    dsp::fill_zero(c->vOutBuffer, to_do);
                     if (c->bActive)
                     {
                         // Apply gain of each generator to the output buffer
                         for (size_t j=0; j<meta::noise_generator_metadata::NUM_GENERATORS; ++j)
                         {
                             generator_t *g      = &vGenerators[j];
-                            dsp::fmadd_k3(c->vBuffer, g->vBuffer, c->vGain[j] * c->fGainOut, to_do);
+                            dsp::fmadd_k3(c->vOutBuffer, g->vBuffer, c->vGain[j] * c->fGainOut, to_do);
                         }
                     }
 
                     // Now we have mixed output from generators, apply special mode to input
                     switch (c->enMode)
                     {
-                        case CH_MODE_ADD:   dsp::fmadd_k3(c->vBuffer, vTemp, c->fGainOut, to_do); break;
-                        case CH_MODE_MULT:  dsp::fmmul_k3(c->vBuffer, vTemp, c->fGainOut, to_do); break;
+                        case CH_MODE_ADD:   dsp::fmadd_k3(c->vOutBuffer, c->vInBuffer, c->fGainOut, to_do); break;
+                        case CH_MODE_MULT:  dsp::fmmul_k3(c->vOutBuffer, c->vInBuffer, c->fGainOut, to_do); break;
                         case CH_MODE_OVERWRITE:
                         default:
                             break;
                     }
 
                     // Apply output gain and measure output level
-                    dsp::mul_k2(c->vBuffer, fGainOut, to_do);
-                    level                   = dsp::abs_max(c->vBuffer, to_do);
+                    dsp::mul_k2(c->vOutBuffer, fGainOut, to_do);
+                    level                   = dsp::abs_max(c->vOutBuffer, to_do);
                     c->pMeterOut->set_value(level);
 
                     // Post-process buffer
-                    c->sBypass.process(c->vOut, c->vIn, c->vBuffer, to_do);
+                    c->sBypass.process(c->vOut, c->vIn, c->vOutBuffer, to_do);
                 }
 
                 // Bind buffer pointers and pass for the analysis
-                size_t an_id    = 0;
+                an_id = 0;
                 for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
                 {
                     generator_t *g          = &vGenerators[i];
@@ -744,10 +755,10 @@ namespace lsp
                 for (size_t i=0; i<nChannels; ++i)
                 {
                     channel_t *c            = &vChannels[i];
-                    an_buffers[an_id++]     = c->vBuffer;
-                    an_buffers[an_id++]     = c->vOut;
+                    an_buffers[an_id++]     = c->vInBuffer;
+                    an_buffers[an_id++]     = c->vOutBuffer;
                 }
-                sAnalyzer.process(an_buffers, an_id);
+                sAnalyzer.process(an_buffers, to_do);
 
                 // Update counter and pointers
                 for (size_t i=0; i<nChannels; ++i)
@@ -760,17 +771,15 @@ namespace lsp
             }
 
             // Process each generator independently
+            an_id   = 0;
             for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
             {
                 generator_t *g      = &vGenerators[i];
 
                 // Make a Frequency Chart - It only needs to be updated when the settings changed. so if bUpdPlots is true.
                 // We do the chart after processing so that we chart the most up to date filter state.
-                if (!g->bUpdPlots)
-                    continue;
-
                 plug::mesh_t *mesh = g->pMsh->buffer<plug::mesh_t>();
-                if ((mesh != NULL) && (mesh->isEmpty()))
+                if ((g->bUpdPlots) && (mesh != NULL) && (mesh->isEmpty()))
                 {
                     // Compute frequency characteristics
                     if (g->bActive)
@@ -801,7 +810,34 @@ namespace lsp
                     // Update state only
                     g->bUpdPlots = false;
                 }
+
+                size_t an_channel   = an_id++;
+                mesh    = g->pSpectrum->buffer<plug::mesh_t>();
+                if ((mesh != NULL) && (mesh->isEmpty()))
+                {
+                    dsp::copy(mesh->pvData[0], vFreqs, meta::noise_generator_metadata::MESH_POINTS);
+                    sAnalyzer.get_spectrum(an_channel, mesh->pvData[1], vIndexes, meta::noise_generator_metadata::MESH_POINTS);
+                    mesh->data(2, meta::noise_generator_metadata::MESH_POINTS);
+                }
             } // for channels
+
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c    = &vChannels[i];
+                for (size_t j=0; j<2; ++j)
+                {
+                    plug::IPort *p      = (j > 0) ? c->pSpectrumOut : c->pSpectrumIn;
+                    plug::mesh_t *mesh  = p->buffer<plug::mesh_t>();
+                    size_t an_channel   = an_id++;
+
+                    if ((mesh != NULL) && (mesh->isEmpty()))
+                    {
+                        dsp::copy(mesh->pvData[0], vFreqs, meta::noise_generator_metadata::MESH_POINTS);
+                        sAnalyzer.get_spectrum(an_channel, mesh->pvData[1], vIndexes, meta::noise_generator_metadata::MESH_POINTS);
+                        mesh->data(2, meta::noise_generator_metadata::MESH_POINTS);
+                    }
+                }
+            }
         }
 
         bool noise_generator::inline_display(plug::ICanvas *cv, size_t width, size_t height)
@@ -946,6 +982,7 @@ namespace lsp
                         v->write("pFft", g->pFft);
                         v->write("pMeterOut", g->pMeterOut);
                         v->write("pMsh", g->pMsh);
+                        v->write("pSpectrum", g->pSpectrum);
                     }
                     v->end_object();
                 }
@@ -970,9 +1007,11 @@ namespace lsp
 
                         v->write("enMode", size_t(c->enMode));
                         v->writev("vGain", c->vGain, meta::noise_generator::NUM_GENERATORS);
+                        v->write("fGainIn", c->fGainIn);
                         v->write("fGainOut", c->fGainOut);
                         v->write("bActive", c->bActive);
-                        v->write("vBuffer", c->vBuffer);
+                        v->write("vInBuffer", c->vInBuffer);
+                        v->write("vOutBuffer", c->vOutBuffer);
                         v->write("vIn", c->vIn);
                         v->write("vOut", c->vOut);
 
@@ -985,9 +1024,12 @@ namespace lsp
                         v->write("pFftOut", c->pFftOut);
                         v->write("pNoiseMode", c->pNoiseMode);
                         v->writev("pGain", c->pGain, meta::noise_generator::NUM_GENERATORS);
+                        v->write("pGainIn", c->pGainIn);
                         v->write("pGainOut", c->pGainOut);
                         v->write("pMeterIn", c->pMeterIn);
                         v->write("pMeterOut", c->pMeterOut);
+                        v->write("pSpectrumIn", c->pSpectrumIn);
+                        v->write("pSpectrumOut", c->pSpectrumOut);
                     }
                     v->end_object();
                 }
@@ -995,8 +1037,8 @@ namespace lsp
             v->end_array();
 
             // Write global data
-            v->write("vTemp", vTemp);
             v->write("vFreqs", vFreqs);
+            v->write("vIndexes", vIndexes);
             v->write("vFreqChart", vFreqChart);
             v->write("fGainIn", fGainIn);
             v->write("fGainOut", fGainOut);
