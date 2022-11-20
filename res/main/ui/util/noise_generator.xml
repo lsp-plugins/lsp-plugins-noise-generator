@@ -404,7 +404,7 @@
 							</cell>
 
 							<button
-								id="velcs_1"
+								id="vc${ch}"
 								text="labels.noise_generator.crush"
 								ui:inject="Button_Cycle"
 								height="22"
@@ -465,7 +465,7 @@
 										<vbox fill="false" pad.v="4">
 											<label text="labels.noise_generator.window" pad.b="4"/>
 											<knob id="vw${ch}" scolor="(:nt${ch} ieq 3) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20"/>
-											<value id="vw${ch}" detailed="false" precision="1"/>
+											<value id="vw${ch}" detailed="false" precision="4"/>
 										</vbox>
 									</ui:with>
 
@@ -480,7 +480,7 @@
 										<vbox fill="false" pad.v="4" pad.h="6">
 											<label text="labels.noise_generator.arn_delta" pad.b="4"/>
 											<knob id="vd${ch}" scolor="(:vt${ch} ieq 2 and :nt${ch} ieq 3) ? 'cycle' : 'cycle_inactive'" scolor.hue="${hue}" size="20"/>
-											<value id="vd${ch}" detailed="false" precision="1"/>
+											<value id="vd${ch}" detailed="false" precision="4"/>
 										</vbox>
 									</ui:with>
 
