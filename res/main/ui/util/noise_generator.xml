@@ -193,9 +193,9 @@
 						</cell>
 						<vbox pad.t="4">
 							<label text="labels.noise_generator.mode" />
-							<combo id="cm_${i}" pad.h="6" pad.b="4" />
+							<combo id="cm_${i}" pad.h="6"  />
 							<ui:if test=":channels ge 2">
-								<hbox pad.h="6">
+								<hbox pad.t="4" pad.h="6">
 									<button id="chs_${i}" text="labels.chan.solo"
 										ui:inject="Button_Cycle_8" down.color.hue="${hue}"
 										down.hover.color.hue="${hue}" text.down.color.hue="${hue}"
