@@ -1,0 +1,25 @@
+{
+	"noise_generator": {
+		"Ina_udible": "Ina",
+		"arn_delta": "ARN Delta",
+		"amp_litude": "Amp",
+		"amplitude": "Ampiezza",
+		"color": "Colore",
+		"crush": "Crush",
+		"crush_prob": "Crush prob",
+		"CuSToM": "Cstm",
+		"distribution": "Distribuzione",
+		"fft_gen": "FFT Gen",
+		"generators": "Generatori",
+		"inaudible": "Inaudibile",
+		"mode": "Modalità",
+		"number_#": "#",
+		"offs_et": "Offs",
+		"offset": "Offset",
+		"settings": "Settaggi",
+		"signal": "Segnale",
+		"type": "Tipo",
+		"velvet_type": "Tipo di Velvet",
+		"window": "Finestra"
+	}
+}

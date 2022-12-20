@@ -1,0 +1,7 @@
+{
+	"noise_generator": {
+		"name": "Noise Generator",
+		"description": "A flexible noise generator supporting different algorithms, colors, and inaudible noise."
+	}
+}
+
