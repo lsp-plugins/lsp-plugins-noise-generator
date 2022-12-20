@@ -24,7 +24,7 @@ ARTIFACT_NAME               = lsp-plugins-noise-generator
 ARTIFACT_TYPE               = plug
 ARTIFACT_DESC               = LSP Noise Generator Plugin Series
 ARTIFACT_HEADERS            = lsp-plug.in
-ARTIFACT_VERSION            = 1.0.0
+ARTIFACT_VERSION            = 1.0.1-devel
 
 
 
