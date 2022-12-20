@@ -220,7 +220,7 @@ namespace lsp
             "noise_generator",
             "Noise Generator",
             B_UTILITIES,
-            "", // TODO: provide ID of the video on YouTube
+            "1Og6vAZ2BLo",
             "A flexible noise generator supporting different algorithms, colors, and inaudible noise."
         };
 
