@@ -86,7 +86,7 @@ namespace lsp
         static const port_item_t channel_mode[] =
         {
             { "Overwrite",                      "noise_generator.mode.over" },
-            { "Add",                            "noise_generator.mode.add" },
+            { "Add",                            "noise_generator.mode.add"  },
             { "Multiply",                       "noise_generator.mode.mult" },
             { NULL,                             NULL }
         };

@@ -62,13 +62,13 @@ namespace lsp
 
             static constexpr float  NOISE_COLOR_SLOPE_DBO_MIN	= -18.0f;
             static constexpr float  NOISE_COLOR_SLOPE_DBO_MAX	= 18.0f;
-            static constexpr float  NOISE_COLOR_SLOPE_DBO_DFL 	= -3.01f;  // Pink
-            static constexpr float  NOISE_COLOR_SLOPE_DBO_STEP	= 0.1f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBO_DFL 	= -3.0f;  // Pink
+            static constexpr float  NOISE_COLOR_SLOPE_DBO_STEP	= 2.0e-3f;
 
             static constexpr float  NOISE_COLOR_SLOPE_DBD_MIN	= -60.0f;
             static constexpr float  NOISE_COLOR_SLOPE_DBD_MAX	= 60.0f;
             static constexpr float  NOISE_COLOR_SLOPE_DBD_DFL 	= -10.0f;  // Pink
-            static constexpr float  NOISE_COLOR_SLOPE_DBD_STEP	= 0.1f;
+            static constexpr float  NOISE_COLOR_SLOPE_DBD_STEP	= 1.0e-2f;
 
             static constexpr float  IN_GAIN_DFL                 = 1.0f;
             static constexpr float  OUT_GAIN_DFL                = 1.0f;
@@ -144,7 +144,7 @@ namespace lsp
         		CHANNEL_MODE_ADD,
         		CHANNEL_MODE_MULT,
 
-        		CHANNEL_MODE_DFL = CHANNEL_MODE_OVERWRITE
+        		CHANNEL_MODE_DFL = CHANNEL_MODE_ADD
 			};
 
         } noise_generator;
