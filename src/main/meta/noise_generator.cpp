@@ -213,7 +213,8 @@ namespace lsp
             PORTS_END
         };
 
-        static const int noise_generator_classes[] = { C_UTILITY, -1};
+        static const int plugin_classes[]           = { C_UTILITY, -1};
+        static const int clap_features[]            = { CF_AUDIO_EFFECT, -1 };
 
         const meta::bundle_t noise_generator_bundle =
         {
@@ -236,8 +237,10 @@ namespace lsp
             "lng0",
             LSP_LADSPA_NOISE_GENERATOR_BASE + 0,
             LSP_LADSPA_URI("noise_generator_x1"),
+            LSP_CLAP_URI("noise_generator_x1"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
-            noise_generator_classes,
+            plugin_classes,
+            clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x1_ports,
             "util/noise_generator.xml",
@@ -258,8 +261,10 @@ namespace lsp
             "lng1",
             LSP_LADSPA_NOISE_GENERATOR_BASE + 1,
             LSP_LADSPA_URI("noise_generator_x2"),
+            LSP_CLAP_URI("noise_generator_x2"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
-            noise_generator_classes,
+            plugin_classes,
+            clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x2_ports,
             "util/noise_generator.xml",
@@ -280,8 +285,10 @@ namespace lsp
             "lng2",
             LSP_LADSPA_NOISE_GENERATOR_BASE + 2,
             LSP_LADSPA_URI("noise_generator_x4"),
+            LSP_CLAP_URI("noise_generator_x4"),
             LSP_PLUGINS_NOISE_GENERATOR_VERSION,
-            noise_generator_classes,
+            plugin_classes,
+            clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x4_ports,
             "util/noise_generator.xml",
