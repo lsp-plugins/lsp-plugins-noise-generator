@@ -2,7 +2,7 @@
 	<!-- Compute number of audio channels for processing -->
 	<ui:set id="channels"
 		value="${(ex :out_4) ? 4 :
-	                               (ex :out_2) ? 2 : 1}" />
+		(ex :out_2) ? 2 : 1}" />
 	
 	<grid rows="2" cols="3" spacing="4">
 		<!-- Graph -->
