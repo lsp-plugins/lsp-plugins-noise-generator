@@ -220,7 +220,7 @@ namespace lsp
         {
             "noise_generator",
             "Noise Generator",
-            B_UTILITIES,
+            B_GENERATORS,
             "1Og6vAZ2BLo",
             "A flexible noise generator supporting different algorithms, colors, and inaudible noise."
         };
