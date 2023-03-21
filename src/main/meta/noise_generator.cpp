@@ -25,7 +25,7 @@
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MAJOR       1
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MINOR       0
-#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       2
+#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       3
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION  \
     LSP_MODULE_VERSION( \
@@ -220,7 +220,7 @@ namespace lsp
         {
             "noise_generator",
             "Noise Generator",
-            B_UTILITIES,
+            B_GENERATORS,
             "1Og6vAZ2BLo",
             "A flexible noise generator supporting different algorithms, colors, and inaudible noise."
         };
