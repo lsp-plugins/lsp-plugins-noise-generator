@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -153,19 +153,8 @@ namespace lsp
                 plug::IPort                *pReactivity;        // FFT reactivity
                 plug::IPort                *pShiftGain;         // FFT gain shift
 
-            public:
-                explicit noise_generator(const meta::plugin_t *meta);
-                virtual ~noise_generator();
-
-                virtual void        init(plug::IWrapper *wrapper, plug::IPort **ports);
-                void                destroy();
-
-            public:
-                virtual void        update_sample_rate(long sr);
-                virtual void        update_settings();
-                virtual void        process(size_t samples);
-                virtual bool        inline_display(plug::ICanvas *cv, size_t width, size_t height);
-                virtual void        dump(dspu::IStateDumper *v) const;
+            protected:
+                void                do_destroy();
 
             protected:
                 inline ssize_t                      make_seed() const;
@@ -174,9 +163,24 @@ namespace lsp
                 static dspu::ng_color_t             get_color(size_t value);
                 static dspu::stlt_slope_unit_t      get_color_slope_unit(size_t value);
                 static ch_mode_t                    get_channel_mode(size_t value);
+
+            public:
+                explicit noise_generator(const meta::plugin_t *meta);
+                virtual ~noise_generator() override;
+
+                virtual void        init(plug::IWrapper *wrapper, plug::IPort **ports) override;
+                void                destroy() override;
+
+            public:
+                virtual void        update_sample_rate(long sr) override;
+                virtual void        update_settings() override;
+                virtual void        process(size_t samples) override;
+                virtual bool        inline_display(plug::ICanvas *cv, size_t width, size_t height) override;
+                virtual void        dump(dspu::IStateDumper *v) const override;
         };
-    }
-}
+
+    } /* namespace plugins */
+} /* namespace lsp */
 
 
 #endif /* PRIVATE_PLUGINS_NOISE_GENERATOR_H_ */

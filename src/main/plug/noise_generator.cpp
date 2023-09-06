@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -75,6 +75,40 @@ namespace lsp
                 if (meta::is_audio_in_port(p))
                     ++nChannels;
 
+            for (size_t i=0; i<meta::noise_generator::NUM_GENERATORS; ++i)
+            {
+                generator_t *g      = &vGenerators[i];
+
+                g->fGain            = 0.0f;
+                g->bActive          = false;
+                g->bInaudible       = false;
+                g->bUpdPlots        = true;
+
+                g->vBuffer          = NULL;
+                g->vFreqChart       = NULL;
+
+                g->pNoiseType       = NULL;
+                g->pAmplitude       = NULL;
+                g->pOffset          = NULL;
+                g->pSlSw            = NULL;
+                g->pMtSw            = NULL;
+                g->pInaSw           = NULL;
+                g->pLCGdist         = NULL;
+                g->pVelvetType      = NULL;
+                g->pVelvetWin       = NULL;
+                g->pVelvetARNd      = NULL;
+                g->pVelvetCSW       = NULL;
+                g->pVelvetCpr       = NULL;
+                g->pColorSel        = NULL;
+                g->pCslopeNPN       = NULL;
+                g->pCslopeDBO       = NULL;
+                g->pCslopeDBD       = NULL;
+                g->pFft             = NULL;
+                g->pMeterOut        = NULL;
+                g->pMsh             = NULL;
+                g->pSpectrum        = NULL;
+            }
+
             // Initialize other parameters
             vChannels       = NULL;
             vFreqs          = NULL;
@@ -97,7 +131,7 @@ namespace lsp
 
         noise_generator::~noise_generator()
         {
-            destroy();
+            do_destroy();
         }
 
         ssize_t noise_generator::make_seed() const
@@ -423,6 +457,12 @@ namespace lsp
 
         void noise_generator::destroy()
         {
+            Module::destroy();
+            do_destroy();
+        }
+
+        void noise_generator::do_destroy()
+        {
             // Drop inline display data structures
             if (pIDisplay != NULL)
             {
@@ -464,9 +504,6 @@ namespace lsp
 
             // Destroy analyzer
             sAnalyzer.destroy();
-
-            // Destroy parent module
-            Module::destroy();
         }
 
         void noise_generator::update_sample_rate(long sr)
