@@ -25,7 +25,7 @@
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MAJOR       1
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MINOR       0
-#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       8
+#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       9
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION  \
     LSP_MODULE_VERSION( \
@@ -216,6 +216,44 @@ namespace lsp
         static const int plugin_classes[]           = { C_UTILITY, -1};
         static const int clap_features[]            = { CF_AUDIO_EFFECT, -1 };
 
+        MONO_PORT_GROUP_PORT(in_1, "in_1");
+        MONO_PORT_GROUP_PORT(in_2, "in_2");
+        MONO_PORT_GROUP_PORT(in_3, "in_3");
+        MONO_PORT_GROUP_PORT(in_4, "in_4");
+        MONO_PORT_GROUP_PORT(out_1, "out_1");
+        MONO_PORT_GROUP_PORT(out_2, "out_2");
+        MONO_PORT_GROUP_PORT(out_3, "out_3");
+        MONO_PORT_GROUP_PORT(out_4, "out_4");
+
+        const port_group_t noise_generator_x1_port_groups[] =
+        {
+            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
+            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
+            PORT_GROUPS_END
+        };
+
+        const port_group_t noise_generator_x2_port_groups[] =
+        {
+            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
+            { "in_2",           "Input 2",       GRP_MONO,       PGF_IN,                    in_2_ports          },
+            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
+            { "out_2",          "Output 2",      GRP_MONO,       PGF_OUT,                   out_2_ports         },
+            PORT_GROUPS_END
+        };
+
+        const port_group_t noise_generator_x4_port_groups[] =
+        {
+            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
+            { "in_2",           "Input 2",       GRP_MONO,       PGF_IN,                    in_2_ports          },
+            { "in_3",           "Input 3",       GRP_MONO,       PGF_IN,                    in_3_ports          },
+            { "in_4",           "Input 4",       GRP_MONO,       PGF_IN,                    in_4_ports          },
+            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
+            { "out_2",          "Output 2",      GRP_MONO,       PGF_OUT,                   out_2_ports         },
+            { "out_3",          "Output 3",      GRP_MONO,       PGF_OUT,                   out_3_ports         },
+            { "out_4",          "Output 4",      GRP_MONO,       PGF_OUT,                   out_4_ports         },
+            PORT_GROUPS_END
+        };
+
         const meta::bundle_t noise_generator_bundle =
         {
             "noise_generator",
@@ -245,7 +283,7 @@ namespace lsp
             noise_generator_x1_ports,
             "util/noise_generator.xml",
             NULL,
-            NULL,
+            noise_generator_x1_port_groups,
             &noise_generator_bundle
         };
 
@@ -269,7 +307,7 @@ namespace lsp
             noise_generator_x2_ports,
             "util/noise_generator.xml",
             NULL,
-            NULL,
+            noise_generator_x2_port_groups,
             &noise_generator_bundle
         };
 
@@ -293,7 +331,7 @@ namespace lsp
             noise_generator_x4_ports,
             "util/noise_generator.xml",
             NULL,
-            NULL,
+            noise_generator_x4_port_groups,
             &noise_generator_bundle
         };
 
