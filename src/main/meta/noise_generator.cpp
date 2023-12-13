@@ -267,6 +267,7 @@ namespace lsp
         {
             "Noise Generator x1",
             "Noise Generator x1",
+            "Noise Generator x1",
             "NG1",
             &developers::s_tronci,
             "noise_generator_x1",
@@ -291,6 +292,7 @@ namespace lsp
         {
             "Noise Generator x2",
             "Noise Generator x2",
+            "Noise Generator x2",
             "NG2",
             &developers::s_tronci,
             "noise_generator_x2",
@@ -313,6 +315,7 @@ namespace lsp
 
         const plugin_t noise_generator_x4 =
         {
+            "Noise Generator x4",
             "Noise Generator x4",
             "Noise Generator x4",
             "NG4",
