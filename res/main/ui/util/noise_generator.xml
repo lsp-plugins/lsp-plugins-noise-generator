@@ -48,7 +48,7 @@
 					<!-- Meshes -->
 					<ui:for id="i" first="1" count="4">
 						<ui:set id="hue" value="${(:i-1.0)/:channels}" />
-						<mesh id="isg_${i}" width="2" smooth="false"
+						<mesh id="isg_${i}" width="2" smooth="true"
 							color="graph_mesh_cycle" color.hue="${hue}" />
 					</ui:for>
 					<ui:for id="i" first="1" count="4">
@@ -56,12 +56,12 @@
 						<mesh id="nsc_${i}" width="2" smooth="true"
 							color="graph_mesh_cycle" color.hue="${hue}" fill="true"
 							fcolor="graph_mesh_cycle" fcolor.hue="${hue}" fcolor.a="0.8" />
-						<mesh id="nsg_${i}" width="2" smooth="false"
+						<mesh id="nsg_${i}" width="2" smooth="true"
 							color="graph_mesh_cycle" color.hue="${hue}" />
 					</ui:for>
 					<ui:for id="i" first="1" count="4">
 						<ui:set id="hue" value="${(:i-1.0)/:channels}" />
-						<mesh id="osg_${i}" width="2" smooth="false"
+						<mesh id="osg_${i}" width="2" smooth="true"
 							color="graph_mesh_cycle" color.hue="${hue}" />
 					</ui:for>
 
