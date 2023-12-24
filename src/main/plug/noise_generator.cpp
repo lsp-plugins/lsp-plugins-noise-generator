@@ -795,7 +795,9 @@ namespace lsp
                     an_buffers[an_id++]     = c->vInBuffer;
                     an_buffers[an_id++]     = c->vOutBuffer;
                 }
-                sAnalyzer.process(an_buffers, to_do);
+
+                if (sAnalyzer.activity())
+                    sAnalyzer.process(an_buffers, to_do);
 
                 // Update counter and pointers
                 for (size_t i=0; i<nChannels; ++i)
