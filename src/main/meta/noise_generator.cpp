@@ -25,7 +25,7 @@
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MAJOR       1
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MINOR       0
-#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       11
+#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       12
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION  \
     LSP_MODULE_VERSION( \
@@ -274,6 +274,8 @@ namespace lsp
             LSP_LV2_URI("noise_generator_x1"),
             LSP_LV2UI_URI("noise_generator_x1"),
             "lng0",
+            LSP_VST3_UID("ng1     lng0"),
+            LSP_VST3UI_UID("ng1     lng0"),
             LSP_LADSPA_NOISE_GENERATOR_BASE + 0,
             LSP_LADSPA_URI("noise_generator_x1"),
             LSP_CLAP_URI("noise_generator_x1"),
@@ -299,6 +301,8 @@ namespace lsp
             LSP_LV2_URI("noise_generator_x2"),
             LSP_LV2UI_URI("noise_generator_x2"),
             "lng1",
+            LSP_VST3_UID("ng2     lng1"),
+            LSP_VST3UI_UID("ng2     lng1"),
             LSP_LADSPA_NOISE_GENERATOR_BASE + 1,
             LSP_LADSPA_URI("noise_generator_x2"),
             LSP_CLAP_URI("noise_generator_x2"),
@@ -324,6 +328,8 @@ namespace lsp
             LSP_LV2_URI("noise_generator_x4"),
             LSP_LV2UI_URI("noise_generator_x4"),
             "lng2",
+            LSP_VST3_UID("ng4     lng2"),
+            LSP_VST3UI_UID("ng4     lng2"),
             LSP_LADSPA_NOISE_GENERATOR_BASE + 2,
             LSP_LADSPA_URI("noise_generator_x4"),
             LSP_CLAP_URI("noise_generator_x4"),
