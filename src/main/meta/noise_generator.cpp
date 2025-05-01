@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -100,8 +100,8 @@ namespace lsp
 
         #define VELVET_CONTROLS(id, label) \
             COMBO("vt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
-            LOG_CONTROL("vw" id, "Velvet Window" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
-            LOG_CONTROL("vd" id, "Velvet ARN Delta" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
+            LOG_CONTROL("vw" id, "Velvet Window" label, "Velvet wnd" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
+            LOG_CONTROL("vd" id, "Velvet ARN Delta" label, "Velvet ARN" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
             SWITCH("vc" id, "Velvet Crushing", 0.0f), \
             CONTROL("vp" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
 
@@ -153,11 +153,11 @@ namespace lsp
             BYPASS, \
             AMP_GAIN("g_in", "Input Gain", noise_generator::IN_GAIN_DFL, 10.0f), \
             AMP_GAIN("g_out", "Output Gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
-            LOG_CONTROL("zoom", "Graph Zoom", U_GAIN_AMP, noise_generator::ZOOM), \
+            LOG_CONTROL("zoom", "Graph Zoom", "Zoom", U_GAIN_AMP, noise_generator::ZOOM), \
             SWITCH("ffti", "Input Signal FFT Analysis", 0.0f), \
             SWITCH("ffto", "Output Signal FFT Analysis", 0.0f), \
             SWITCH("fftg", "Generator Output Signal FFT Analysis", 1.0f), \
-            LOG_CONTROL("react", "FFT Reactivity", U_MSEC, noise_generator::FFT_REACT_TIME), \
+            LOG_CONTROL("react", "FFT Reactivity", "Reactivity", U_MSEC, noise_generator::FFT_REACT_TIME), \
             AMP_GAIN("shift", "FFT Shift Gain", 1.0f, 100.0f) \
 
         static const port_t noise_generator_x1_ports[] =
