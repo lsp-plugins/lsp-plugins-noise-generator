@@ -96,41 +96,41 @@ namespace lsp
             AUDIO_OUTPUT("out" id, "Output" label)
 
         #define LCG_CONTROLS(id, label) \
-            COMBO("ld" id, "LCG Distribution" label, noise_generator::NOISE_LCG_DFL, noise_lcg_dist)
+            COMBO("ld" id, "LCG Distribution" label, "LGC dist" label, noise_generator::NOISE_LCG_DFL, noise_lcg_dist)
 
         #define VELVET_CONTROLS(id, label) \
-            COMBO("vt" id, "Velvet Type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
+            COMBO("vt" id, "Velvet Type" label, "Velvet type" label, noise_generator::NOISE_VELVET_DFL, noise_velvet_type), \
             LOG_CONTROL("vw" id, "Velvet Window" label, "Velvet wnd" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
             LOG_CONTROL("vd" id, "Velvet ARN Delta" label, "Velvet ARN" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
-            SWITCH("vc" id, "Velvet Crushing", 0.0f), \
+            SWITCH("vc" id, "Velvet Crushing", "Velvet crush" label, 0.0f), \
             CONTROL("vp" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
 
         #define COLOR_CONTROLS(id, label) \
-            COMBO("cs" id, "Color Selector" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
+            COMBO("cs" id, "Color Selector" label, "Color" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
             CONTROL("csn" id, "Color Slope NPN" label, U_NEPER, noise_generator::NOISE_COLOR_SLOPE_NPN), \
             CONTROL("cso" id, "Color Slope dBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
             CONTROL("csd" id, "Color Slope dBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
 
         #define NOISE_CONTROLS(id, label, noise_t) \
-            COMBO("nt" id, "Noise Type" label, noise_t, noise_type), \
+            COMBO("nt" id, "Noise Type" label, "Noise" label, noise_t, noise_type), \
             AMP_GAIN100("na" id, "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
             CONTROL("no" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
-            SWITCH("ns" id, "Noise Solo" label, 0.0f), \
-            SWITCH("nm" id, "Noise Mute" label, 0.0f), \
-            SWITCH("ni" id, "Noise Inaudible", 0.0f)
+            SWITCH("ns" id, "Noise Solo" label, "Solo" label, 0.0f), \
+            SWITCH("nm" id, "Noise Mute" label, "Mute" label, 0.0f), \
+            SWITCH("ni" id, "Noise Inaudible", "Inaudible" label, 0.0f)
 
         #define GENERATOR_CONTROLS(id, label, noise_t) \
             NOISE_CONTROLS(id, label, noise_t), \
             LCG_CONTROLS(id, label), \
             VELVET_CONTROLS(id, label), \
             COLOR_CONTROLS(id, label), \
-            SWITCH("fftg" id, "Generator Output FFT Analysis" label, 1), \
+            SWITCH("fftg" id, "Generator Output FFT Analysis" label, "FFT On " label, 1), \
             METER_GAIN("nlm" id, "Noise Level Meter" label, GAIN_AMP_P_24_DB), \
             MESH("nsc" id, "Noise Spectrum Chart" label, 2, noise_generator::MESH_POINTS + 4), \
             MESH("nsg" id, "Noise Spectrum Graph" label, 2, noise_generator::MESH_POINTS)
 
         #define CHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
-            COMBO("cm" id, "Channel Mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
+            COMBO("cm" id, "Channel Mode" label, "Chan mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
             AMP_GAIN100("gg1" id, "Generator 1 Gain" label, g1), \
             AMP_GAIN100("gg2" id, "Generator 2 Gain" label, g2), \
             AMP_GAIN100("gg3" id, "Generator 3 Gain" label, g3), \
@@ -143,10 +143,10 @@ namespace lsp
             MESH("osg" id, "Output Spectrum Graph" label, 2, noise_generator::MESH_POINTS)
 
         #define MCHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
-            SWITCH("chs" id, "Channel Solo" label, 0.0f), \
-            SWITCH("chm" id, "Channel Mute" label, 0.0f), \
-            SWITCH("ffti" id, "Input Signal FFT Analysis" label, 1.0f), \
-            SWITCH("ffto" id, "Output Signal FFT Analysis" label, 1.0f), \
+            SWITCH("chs" id, "Channel Solo" label, "Solo chan" label, 0.0f), \
+            SWITCH("chm" id, "Channel Mute" label, "Mute chan" label, 0.0f), \
+            SWITCH("ffti" id, "Input Signal FFT Analysis" label, "FFT In chan" label, 1.0f), \
+            SWITCH("ffto" id, "Output Signal FFT Analysis" label, "FFT Out chan" label, 1.0f), \
             CHANNEL_CONTROLS(id, label, g1, g2, g3, g4)
 
         #define NG_COMMON \
@@ -154,9 +154,9 @@ namespace lsp
             AMP_GAIN("g_in", "Input Gain", noise_generator::IN_GAIN_DFL, 10.0f), \
             AMP_GAIN("g_out", "Output Gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
             LOG_CONTROL("zoom", "Graph Zoom", "Zoom", U_GAIN_AMP, noise_generator::ZOOM), \
-            SWITCH("ffti", "Input Signal FFT Analysis", 0.0f), \
-            SWITCH("ffto", "Output Signal FFT Analysis", 0.0f), \
-            SWITCH("fftg", "Generator Output Signal FFT Analysis", 1.0f), \
+            SWITCH("ffti", "Input Signal FFT Analysis", "FFT In", 0.0f), \
+            SWITCH("ffto", "Output Signal FFT Analysis", "FFT Out", 0.0f), \
+            SWITCH("fftg", "Generator Output Signal FFT Analysis", "FFT Gen", 1.0f), \
             LOG_CONTROL("react", "FFT Reactivity", "Reactivity", U_MSEC, noise_generator::FFT_REACT_TIME), \
             AMP_GAIN("shift", "FFT Shift Gain", 1.0f, 100.0f) \
 
