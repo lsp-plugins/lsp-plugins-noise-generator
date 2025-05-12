@@ -103,18 +103,18 @@ namespace lsp
             LOG_CONTROL("vw" id, "Velvet Window" label, "Velvet wnd" label, U_SEC, noise_generator::VELVET_WINDOW_DURATION), \
             LOG_CONTROL("vd" id, "Velvet ARN Delta" label, "Velvet ARN" label, U_NONE, noise_generator::VELVET_ARN_DELTA), \
             SWITCH("vc" id, "Velvet Crushing", "Velvet crush" label, 0.0f), \
-            CONTROL("vp" id, "Velvet Crushing Probability" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
+            CONTROL("vp" id, "Velvet Crushing Probability" label, "Velvet prob" label, U_PERCENT, noise_generator::VELVET_CRUSH_PROB)
 
         #define COLOR_CONTROLS(id, label) \
             COMBO("cs" id, "Color Selector" label, "Color" label, noise_generator::NOISE_COLOR_DFL, noise_color), \
-            CONTROL("csn" id, "Color Slope NPN" label, U_NEPER, noise_generator::NOISE_COLOR_SLOPE_NPN), \
-            CONTROL("cso" id, "Color Slope dBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
-            CONTROL("csd" id, "Color Slope dBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
+            CONTROL("csn" id, "Color Slope NPN" label, "Color NPN" label, U_NEPER, noise_generator::NOISE_COLOR_SLOPE_NPN), \
+            CONTROL("cso" id, "Color Slope dBO" label, "Color dBO" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBO), \
+            CONTROL("csd" id, "Color Slope dBD" label, "Color dBD" label, U_DB, noise_generator::NOISE_COLOR_SLOPE_DBD)
 
         #define NOISE_CONTROLS(id, label, noise_t) \
             COMBO("nt" id, "Noise Type" label, "Noise" label, noise_t, noise_type), \
             AMP_GAIN100("na" id, "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
-            CONTROL("no" id, "Noise Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
+            CONTROL("no" id, "Noise Offset" label, "Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
             SWITCH("ns" id, "Noise Solo" label, "Solo" label, 0.0f), \
             SWITCH("nm" id, "Noise Mute" label, "Mute" label, 0.0f), \
             SWITCH("ni" id, "Noise Inaudible", "Inaudible" label, 0.0f)
