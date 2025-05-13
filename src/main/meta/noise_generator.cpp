@@ -113,7 +113,7 @@ namespace lsp
 
         #define NOISE_CONTROLS(id, label, noise_t) \
             COMBO("nt" id, "Noise Type" label, "Noise" label, noise_t, noise_type), \
-            AMP_GAIN100("na" id, "Noise Amplitude", noise_generator::NOISE_AMPLITUDE_DFL), \
+            AMP_GAIN100("na" id, "Noise Amplitude", "Noise gain" label, noise_generator::NOISE_AMPLITUDE_DFL), \
             CONTROL("no" id, "Noise Offset" label, "Offset" label, U_NONE, noise_generator::NOISE_OFFSET), \
             SWITCH("ns" id, "Noise Solo" label, "Solo" label, 0.0f), \
             SWITCH("nm" id, "Noise Mute" label, "Mute" label, 0.0f), \
@@ -131,12 +131,12 @@ namespace lsp
 
         #define CHANNEL_CONTROLS(id, label, g1, g2, g3, g4) \
             COMBO("cm" id, "Channel Mode" label, "Chan mode" label, noise_generator::CHANNEL_MODE_DFL, channel_mode), \
-            AMP_GAIN100("gg1" id, "Generator 1 Gain" label, g1), \
-            AMP_GAIN100("gg2" id, "Generator 2 Gain" label, g2), \
-            AMP_GAIN100("gg3" id, "Generator 3 Gain" label, g3), \
-            AMP_GAIN100("gg4" id, "Generator 4 Gain" label, g4), \
-            AMP_GAIN100("gin" id, "Input gain" label, GAIN_AMP_0_DB), \
-            AMP_GAIN100("gout" id, "Output gain" label, GAIN_AMP_0_DB), \
+            AMP_GAIN100("gg1" id, "Generator 1 Gain" label, "Gen1 gain" label, g1), \
+            AMP_GAIN100("gg2" id, "Generator 2 Gain" label, "Gen2 gain" label, g2), \
+            AMP_GAIN100("gg3" id, "Generator 3 Gain" label, "Gen3 gain" label, g3), \
+            AMP_GAIN100("gg4" id, "Generator 4 Gain" label, "Gen4 gain" label, g4), \
+            AMP_GAIN100("gin" id, "Input gain" label, "In gain" label, GAIN_AMP_0_DB), \
+            AMP_GAIN100("gout" id, "Output gain" label, "Out gain" label, GAIN_AMP_0_DB), \
             METER_GAIN("ilm" id, "Input Level Meter" label, GAIN_AMP_P_24_DB), \
             METER_GAIN("olm" id, "Output Level Meter" label, GAIN_AMP_P_24_DB), \
             MESH("isg" id, "Input Spectrum Graph" label, 2, noise_generator::MESH_POINTS), \
@@ -151,14 +151,14 @@ namespace lsp
 
         #define NG_COMMON \
             BYPASS, \
-            AMP_GAIN("g_in", "Input Gain", noise_generator::IN_GAIN_DFL, 10.0f), \
-            AMP_GAIN("g_out", "Output Gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
+            AMP_GAIN("g_in", "Input Gain", "Input gain", noise_generator::IN_GAIN_DFL, 10.0f), \
+            AMP_GAIN("g_out", "Output Gain", "Output gain", noise_generator::OUT_GAIN_DFL, 10.0f), \
             LOG_CONTROL("zoom", "Graph Zoom", "Zoom", U_GAIN_AMP, noise_generator::ZOOM), \
             SWITCH("ffti", "Input Signal FFT Analysis", "FFT In", 0.0f), \
             SWITCH("ffto", "Output Signal FFT Analysis", "FFT Out", 0.0f), \
             SWITCH("fftg", "Generator Output Signal FFT Analysis", "FFT Gen", 1.0f), \
             LOG_CONTROL("react", "FFT Reactivity", "Reactivity", U_MSEC, noise_generator::FFT_REACT_TIME), \
-            AMP_GAIN("shift", "FFT Shift Gain", 1.0f, 100.0f) \
+            AMP_GAIN("shift", "FFT Shift Gain", "FFT shift", 1.0f, 100.0f) \
 
         static const port_t noise_generator_x1_ports[] =
         {
