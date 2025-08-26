@@ -104,14 +104,14 @@ $x4     =   strpos($PAGE, '_x4') > 0;
 			rates lower than this the noise cannot be made inaudible.
 		</li>
 	</ul>
-	<li><b>Type</b> - This control selects the type of noise generator. The following types are avaiable.</li>
+	<li><b>Type</b> - This control selects the type of noise generator. The following types are available.</li>
 	<ul>
 		<li>
 			<b>Off</b> - Shuts off the noise generator. 
 		</li>
 		<li>
 			<b>MLS</b> - Maximum Length Sequence. This is a high quality generator with ideal decorrelation.
-			It is the "most random" noise avalible. However, it has only two states (samples are emitted only
+			It is the "most random" noise available. However, it has only two states (samples are emitted only
 			at minimal or maximum range).
 		</li>
 		<li>
@@ -122,7 +122,7 @@ $x4     =   strpos($PAGE, '_x4') > 0;
 			<b>Velvet</b> - Velvet Noise Generator. This is a sparse noise generator (random pulses
 			separated by random amounts of silence). It has specific types (see <b>Velvet Type</b>)
 			and it can be crushed. Crushing means that the spike values are rounded to 0 or full scale
-			depending on the outcome of a ramdom variable. This process can be tuned by a probability
+			depending on the outcome of a random variable. This process can be tuned by a probability
 			to which the random variable is compared.
 		</li>
 	</ul>
@@ -153,7 +153,7 @@ $x4     =   strpos($PAGE, '_x4') > 0;
 	</li>
 	<ul>
 		<li><b>Uniform</b> - A uniform probability distribution.</li>
-		<li><b>Exponential</b> - A two sided exponetial probability distribution.</li>
+		<li><b>Exponential</b> - A two sided exponential probability distribution.</li>
 		<li><b>Triangular</b> - A triangular probability distribution.</li>
 		<li><b>Gaussian</b> - A gaussian probability distribution.</li>
 	</ul>
