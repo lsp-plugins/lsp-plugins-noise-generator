@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/plug-fw/meta/ports.h>
+#include <lsp-plug.in/plug-fw/meta/registry.h>
 #include <lsp-plug.in/shared/meta/developers.h>
 #include <private/meta/noise_generator.h>
 
@@ -292,6 +293,7 @@ namespace lsp
             noise_generator_x1_port_groups,
             &noise_generator_bundle
         };
+        LSP_REGISTER_METADATA(noise_generator_x1);
 
         const plugin_t noise_generator_x2 =
         {
@@ -322,6 +324,7 @@ namespace lsp
             noise_generator_x2_port_groups,
             &noise_generator_bundle
         };
+        LSP_REGISTER_METADATA(noise_generator_x2);
 
         const plugin_t noise_generator_x4 =
         {
@@ -352,6 +355,7 @@ namespace lsp
             noise_generator_x4_port_groups,
             &noise_generator_bundle
         };
+        LSP_REGISTER_METADATA(noise_generator_x4);
 
     } /* namespace meta */
 } /* namespace lsp */
