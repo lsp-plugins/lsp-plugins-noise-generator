@@ -288,7 +288,7 @@ namespace lsp
             clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x1_ports,
-            "util/noise_generator.xml",
+            "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x1_port_groups,
             &noise_generator_bundle
@@ -319,7 +319,7 @@ namespace lsp
             clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x2_ports,
-            "util/noise_generator.xml",
+            "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x2_port_groups,
             &noise_generator_bundle
@@ -350,7 +350,7 @@ namespace lsp
             clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x4_ports,
-            "util/noise_generator.xml",
+            "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x4_port_groups,
             &noise_generator_bundle
