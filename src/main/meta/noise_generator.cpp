@@ -291,7 +291,8 @@ namespace lsp
             "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x1_port_groups,
-            &noise_generator_bundle
+            &noise_generator_bundle,
+            1
         };
         LSP_REGISTER_METADATA(noise_generator_x1);
 
@@ -322,7 +323,8 @@ namespace lsp
             "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x2_port_groups,
-            &noise_generator_bundle
+            &noise_generator_bundle,
+            2
         };
         LSP_REGISTER_METADATA(noise_generator_x2);
 
@@ -353,7 +355,8 @@ namespace lsp
             "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x4_port_groups,
-            &noise_generator_bundle
+            &noise_generator_bundle,
+            3
         };
         LSP_REGISTER_METADATA(noise_generator_x4);
 
