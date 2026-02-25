@@ -217,41 +217,33 @@ namespace lsp
         static const int plugin_classes[]           = { C_UTILITY, -1};
         static const int clap_features[]            = { CF_AUDIO_EFFECT, -1 };
 
-        MONO_PORT_GROUP_PORT(in_1, "in_1");
-        MONO_PORT_GROUP_PORT(in_2, "in_2");
-        MONO_PORT_GROUP_PORT(in_3, "in_3");
-        MONO_PORT_GROUP_PORT(in_4, "in_4");
-        MONO_PORT_GROUP_PORT(out_1, "out_1");
-        MONO_PORT_GROUP_PORT(out_2, "out_2");
-        MONO_PORT_GROUP_PORT(out_3, "out_3");
-        MONO_PORT_GROUP_PORT(out_4, "out_4");
+        MONO_PORT_GROUP_PORT(mono_in_1, "in_1");
+        MONO_PORT_GROUP_PORT(mono_out_1, "out_1");
+        STEREO_PORT_GROUP_PORTS(stereo_in_1, "in_1", "in_2");
+        STEREO_PORT_GROUP_PORTS(stereo_out_1, "out_1", "out_2");
+        STEREO_PORT_GROUP_PORTS(stereo_in_2, "in_3", "in_4");
+        STEREO_PORT_GROUP_PORTS(stereo_out_2, "out_3", "out_4");
 
         const port_group_t noise_generator_x1_port_groups[] =
         {
-            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
-            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
+            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         mono_in_1_ports     },
+            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        mono_out_1_ports    },
             PORT_GROUPS_END
         };
 
         const port_group_t noise_generator_x2_port_groups[] =
         {
-            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
-            { "in_2",           "Input 2",       GRP_MONO,       PGF_IN,                    in_2_ports          },
-            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
-            { "out_2",          "Output 2",      GRP_MONO,       PGF_OUT,                   out_2_ports         },
+            { "in_1",           "Input 1",       GRP_STEREO,     PGF_IN | PGF_MAIN,         stereo_in_1_ports   },
+            { "out_1",          "Output 1",      GRP_STEREO,     PGF_OUT | PGF_MAIN,        stereo_out_1_ports  },
             PORT_GROUPS_END
         };
 
         const port_group_t noise_generator_x4_port_groups[] =
         {
-            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
-            { "in_2",           "Input 2",       GRP_MONO,       PGF_IN,                    in_2_ports          },
-            { "in_3",           "Input 3",       GRP_MONO,       PGF_IN,                    in_3_ports          },
-            { "in_4",           "Input 4",       GRP_MONO,       PGF_IN,                    in_4_ports          },
-            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
-            { "out_2",          "Output 2",      GRP_MONO,       PGF_OUT,                   out_2_ports         },
-            { "out_3",          "Output 3",      GRP_MONO,       PGF_OUT,                   out_3_ports         },
-            { "out_4",          "Output 4",      GRP_MONO,       PGF_OUT,                   out_4_ports         },
+            { "in_1",           "Input 1",       GRP_STEREO,     PGF_IN | PGF_MAIN,         stereo_in_1_ports   },
+            { "in_2",           "Input 2",       GRP_STEREO,     PGF_IN,                    stereo_in_2_ports   },
+            { "out_1",          "Output 1",      GRP_STEREO,     PGF_OUT | PGF_MAIN,        stereo_out_1_ports  },
+            { "out_2",          "Output 2",      GRP_STEREO,     PGF_OUT,                   stereo_out_2_ports  },
             PORT_GROUPS_END
         };
 
