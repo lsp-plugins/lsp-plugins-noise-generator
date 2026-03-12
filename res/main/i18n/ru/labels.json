@@ -1,2 +1,25 @@
 {
+	"noise_generator": {
+		"Ina_udible": "Беззв",
+		"arn_delta": "Дельта АСШ",
+		"amp_litude": "Ампл",
+		"amplitude": "Амплитуда",
+		"color": "Цвет",
+		"crush": "Дробление",
+		"crush_prob": "Вер дробления",
+		"CuSToM": "Особ",
+		"distribution": "Распределение",
+		"fft_gen": "Гер БПФ",
+		"generators": "Генераторы",
+		"inaudible": "Беззвучный",
+		"mode": "Режим",
+		"number_#": "№",
+		"offs_et": "Смещ",
+		"offset": "Смещение",
+		"settings": "Настройки",
+		"signal": "Сигнал",
+		"type": "Тип",
+		"velvet_type": "Тип бархат",
+		"window": "Окно"
+	}
 }

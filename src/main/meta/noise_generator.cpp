@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -20,12 +20,13 @@
  */
 
 #include <lsp-plug.in/plug-fw/meta/ports.h>
+#include <lsp-plug.in/plug-fw/meta/registry.h>
 #include <lsp-plug.in/shared/meta/developers.h>
 #include <private/meta/noise_generator.h>
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MAJOR       1
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MINOR       0
-#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       24
+#define LSP_PLUGINS_NOISE_GENERATOR_VERSION_MICRO       25
 
 #define LSP_PLUGINS_NOISE_GENERATOR_VERSION  \
     LSP_MODULE_VERSION( \
@@ -216,41 +217,33 @@ namespace lsp
         static const int plugin_classes[]           = { C_UTILITY, -1};
         static const int clap_features[]            = { CF_AUDIO_EFFECT, -1 };
 
-        MONO_PORT_GROUP_PORT(in_1, "in_1");
-        MONO_PORT_GROUP_PORT(in_2, "in_2");
-        MONO_PORT_GROUP_PORT(in_3, "in_3");
-        MONO_PORT_GROUP_PORT(in_4, "in_4");
-        MONO_PORT_GROUP_PORT(out_1, "out_1");
-        MONO_PORT_GROUP_PORT(out_2, "out_2");
-        MONO_PORT_GROUP_PORT(out_3, "out_3");
-        MONO_PORT_GROUP_PORT(out_4, "out_4");
+        MONO_PORT_GROUP_PORT(mono_in_1, "in_1");
+        MONO_PORT_GROUP_PORT(mono_out_1, "out_1");
+        STEREO_PORT_GROUP_PORTS(stereo_in_1, "in_1", "in_2");
+        STEREO_PORT_GROUP_PORTS(stereo_out_1, "out_1", "out_2");
+        STEREO_PORT_GROUP_PORTS(stereo_in_2, "in_3", "in_4");
+        STEREO_PORT_GROUP_PORTS(stereo_out_2, "out_3", "out_4");
 
         const port_group_t noise_generator_x1_port_groups[] =
         {
-            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
-            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
+            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         mono_in_1_ports     },
+            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        mono_out_1_ports    },
             PORT_GROUPS_END
         };
 
         const port_group_t noise_generator_x2_port_groups[] =
         {
-            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
-            { "in_2",           "Input 2",       GRP_MONO,       PGF_IN,                    in_2_ports          },
-            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
-            { "out_2",          "Output 2",      GRP_MONO,       PGF_OUT,                   out_2_ports         },
+            { "in_1",           "Input 1",       GRP_STEREO,     PGF_IN | PGF_MAIN,         stereo_in_1_ports   },
+            { "out_1",          "Output 1",      GRP_STEREO,     PGF_OUT | PGF_MAIN,        stereo_out_1_ports  },
             PORT_GROUPS_END
         };
 
         const port_group_t noise_generator_x4_port_groups[] =
         {
-            { "in_1",           "Input 1",       GRP_MONO,       PGF_IN | PGF_MAIN,         in_1_ports          },
-            { "in_2",           "Input 2",       GRP_MONO,       PGF_IN,                    in_2_ports          },
-            { "in_3",           "Input 3",       GRP_MONO,       PGF_IN,                    in_3_ports          },
-            { "in_4",           "Input 4",       GRP_MONO,       PGF_IN,                    in_4_ports          },
-            { "out_1",          "Output 1",      GRP_MONO,       PGF_OUT | PGF_MAIN,        out_1_ports         },
-            { "out_2",          "Output 2",      GRP_MONO,       PGF_OUT,                   out_2_ports         },
-            { "out_3",          "Output 3",      GRP_MONO,       PGF_OUT,                   out_3_ports         },
-            { "out_4",          "Output 4",      GRP_MONO,       PGF_OUT,                   out_4_ports         },
+            { "in_1",           "Input 1",       GRP_STEREO,     PGF_IN | PGF_MAIN,         stereo_in_1_ports   },
+            { "in_2",           "Input 2",       GRP_STEREO,     PGF_IN,                    stereo_in_2_ports   },
+            { "out_1",          "Output 1",      GRP_STEREO,     PGF_OUT | PGF_MAIN,        stereo_out_1_ports  },
+            { "out_2",          "Output 2",      GRP_STEREO,     PGF_OUT,                   stereo_out_2_ports  },
             PORT_GROUPS_END
         };
 
@@ -287,11 +280,13 @@ namespace lsp
             clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x1_ports,
-            "util/noise_generator.xml",
+            "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x1_port_groups,
-            &noise_generator_bundle
+            &noise_generator_bundle,
+            1
         };
+        LSP_REGISTER_METADATA(noise_generator_x1);
 
         const plugin_t noise_generator_x2 =
         {
@@ -317,11 +312,13 @@ namespace lsp
             clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x2_ports,
-            "util/noise_generator.xml",
+            "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x2_port_groups,
-            &noise_generator_bundle
+            &noise_generator_bundle,
+            2
         };
+        LSP_REGISTER_METADATA(noise_generator_x2);
 
         const plugin_t noise_generator_x4 =
         {
@@ -347,11 +344,13 @@ namespace lsp
             clap_features,
             E_INLINE_DISPLAY | E_DUMP_STATE,
             noise_generator_x4_ports,
-            "util/noise_generator.xml",
+            "plugins/util/noise_generator.xml",
             NULL,
             noise_generator_x4_port_groups,
-            &noise_generator_bundle
+            &noise_generator_bundle,
+            3
         };
+        LSP_REGISTER_METADATA(noise_generator_x4);
 
     } /* namespace meta */
 } /* namespace lsp */
