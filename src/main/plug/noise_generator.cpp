@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Stefano Tronci <stefano.tronci@protonmail.com>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -26,25 +27,21 @@
 #include <lsp-plug.in/plug-fw/meta/func.h>
 #include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/shared/id_colors.h>
+#include <lsp-plug.in/shared/debug.h>
 
 #include <private/meta/noise_generator.h>
 #include <private/plugins/noise_generator.h>
 
-/* The size of temporary buffer for audio processing */
-#define BUFFER_SIZE                 0x1000U
-#define INA_FILTER_ORD              64
-#define INA_FILTER_CUTOFF           (DEFAULT_SAMPLE_RATE * 0.5f)
-#define INA_ATTENUATION             0.5f // We attenuate the noise before filtering to make it inaudible. This to prevent sharp transients from still being audible.
-#define COLOR_FILTER_ORDER          32
-#define IDISPLAY_BUF_SIZE           64u  // Number of samples in frequency chart for Inline Display
-
 namespace lsp
 {
-    inline plug::IPort *TRACE_PORT(plug::IPort *p)
-    {
-        lsp_trace("  port id=%s", p->metadata()->id);
-        return p;
-    }
+    /* The size of temporary buffer for audio processing */
+    static constexpr size_t BUFFER_SIZE         = 0x200;
+    static constexpr size_t INA_FILTER_ORD      = 64;
+    static constexpr size_t COLOR_FILTER_ORDER  = 32;
+    static constexpr float INA_FILTER_CUTOFF    = DEFAULT_SAMPLE_RATE * 0.5f;
+
+    // We attenuate the noise before filtering to make it inaudible. This to prevent sharp transients from still being audible.
+    static constexpr float INA_ATTENUATION      = 0.5f;
 
     namespace plugins
     {
@@ -229,7 +226,7 @@ namespace lsp
             Module::init(wrapper, ports);
 
             // Initialize analyzer
-            size_t an_channels      = nChannels * 2 + meta::noise_generator::NUM_GENERATORS;
+            const size_t an_channels    = nChannels * 2 + meta::noise_generator::NUM_GENERATORS;
             if (!sAnalyzer.init(an_channels, meta::noise_generator::FFT_RANK,
                 MAX_SAMPLE_RATE, meta::noise_generator::FFT_REFRESH_RATE))
                 return;
@@ -241,7 +238,7 @@ namespace lsp
             sAnalyzer.set_rate(meta::noise_generator::FFT_REFRESH_RATE);
 
             // Estimate the number of bytes to allocate
-            size_t szof_channels    = align_size(sizeof(channel_t) * nChannels, OPTIMAL_ALIGN);
+            const size_t szof_channels  = align_size(sizeof(channel_t) * nChannels, OPTIMAL_ALIGN);
 
             /** Buffers:
              * 2X Temporary Buffer for Processing (BUFFER_SIZE)
@@ -249,13 +246,14 @@ namespace lsp
              * 1X Complex Part of Frequency Response (MESH_POINTS)
              * 1X Frequency Chart of Channel (MESH_POINTS)
              */
-            size_t buf_sz           = align_size(BUFFER_SIZE * sizeof(float), OPTIMAL_ALIGN);
-            size_t idx_sz           = align_size(BUFFER_SIZE * sizeof(uint32_t), OPTIMAL_ALIGN);
-            size_t chr_sz           = align_size(meta::noise_generator::MESH_POINTS *  sizeof(float), OPTIMAL_ALIGN);
-            size_t gen_sz           = (chr_sz + buf_sz) * meta::noise_generator::NUM_GENERATORS;
-            size_t alloc            = szof_channels + // vChannels
-                                      chr_sz + idx_sz + 2 * chr_sz +// vFreqs, vIndexes, vFreqChart[2]
-                                      gen_sz + // vGenerators[i].vFreqChart
+            const size_t buf_sz     = align_size(BUFFER_SIZE * sizeof(float), OPTIMAL_ALIGN);
+            const size_t chr_sz     = align_size(meta::noise_generator::MESH_POINTS * sizeof(float), OPTIMAL_ALIGN);
+            const size_t idx_sz     = align_size(meta::noise_generator::MESH_POINTS * sizeof(uint32_t), OPTIMAL_ALIGN);
+            const size_t alloc      = szof_channels + // vChannels
+                                      chr_sz + idx_sz + 2*chr_sz +// vFreqs, vIndexes, vFreqChart[2]
+                                      meta::noise_generator::NUM_GENERATORS * (
+                                          chr_sz +      // vGenerators[i].vFreqChart
+                                          buf_sz) +     // vGenerators[i].vBuffer
                                       nChannels * buf_sz * 2; // vChannels[i]: vInBuffer, vOutBuffer
 
             // Allocate memory-aligned data
@@ -265,19 +263,15 @@ namespace lsp
                 return;
 
             // Initialise pointers to channels and temporary buffer
-            vChannels               = reinterpret_cast<channel_t *>(ptr);
-            ptr                    += szof_channels;
-            vFreqs                  = reinterpret_cast<float *>(ptr);
-            ptr                    += idx_sz;
-            vIndexes                = reinterpret_cast<uint32_t *>(ptr);
-            ptr                    += chr_sz;
-            vFreqChart              = reinterpret_cast<float *>(ptr);
-            ptr                    += chr_sz * 2;
+            vChannels               = advance_ptr_bytes<channel_t>(ptr, szof_channels);
+            vFreqs                  = advance_ptr_bytes<float>(ptr, chr_sz);
+            vIndexes                = advance_ptr_bytes<uint32_t>(ptr, idx_sz);
+            vFreqChart              = advance_ptr_bytes<float>(ptr, chr_sz * 2);
 
             // Initialize generators
             for (size_t i=0; i<meta::noise_generator::NUM_GENERATORS; ++i)
             {
-                generator_t *g          = &vGenerators[i];
+                generator_t * const g   = &vGenerators[i];
 
                 // Construct in-place DSP processors
                 g->sNoiseGenerator.construct();
@@ -304,10 +298,8 @@ namespace lsp
                 g->bInaudible           = false;
                 g->bUpdPlots            = true;
 
-                g->vBuffer              = reinterpret_cast<float *>(ptr);
-                ptr                    += buf_sz;
-                g->vFreqChart           = reinterpret_cast<float *>(ptr);
-                ptr                    += chr_sz;
+                g->vBuffer              = advance_ptr_bytes<float>(ptr, buf_sz);
+                g->vFreqChart           = advance_ptr_bytes<float>(ptr, chr_sz);
 
                 // Initialize input ports
                 g->pNoiseType           = NULL;
@@ -346,10 +338,8 @@ namespace lsp
                 c->fGainIn              = GAIN_AMP_0_DB;
                 c->fGainOut             = GAIN_AMP_0_DB;
                 c->bActive              = true;
-                c->vInBuffer            = reinterpret_cast<float *>(ptr);
-                ptr                    += buf_sz;
-                c->vOutBuffer           = reinterpret_cast<float *>(ptr);
-                ptr                    += buf_sz;
+                c->vInBuffer            = advance_ptr_bytes<float>(ptr, buf_sz);
+                c->vOutBuffer           = advance_ptr_bytes<float>(ptr, buf_sz);
                 c->vIn                  = NULL;
                 c->vOut                 = NULL;
 
@@ -380,21 +370,21 @@ namespace lsp
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
-                c->pIn                  = TRACE_PORT(ports[port_id++]);
-                c->pOut                 = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(c->pIn);
+                BIND_PORT(c->pOut);
             }
 
             // Bind global ports
             lsp_trace("Binding global control ports");
-            pBypass                     = TRACE_PORT(ports[port_id++]);
-            pGainIn                     = TRACE_PORT(ports[port_id++]);
-            pGainOut                    = TRACE_PORT(ports[port_id++]);
-            TRACE_PORT(ports[port_id++]);   // Skip 'Zoom' control
-            pFftIn                      = TRACE_PORT(ports[port_id++]);
-            pFftOut                     = TRACE_PORT(ports[port_id++]);
-            pFftGen                     = TRACE_PORT(ports[port_id++]);
-            pReactivity                 = TRACE_PORT(ports[port_id++]);
-            pShiftGain                  = TRACE_PORT(ports[port_id++]);
+            BIND_PORT(pBypass);
+            BIND_PORT(pGainIn);
+            BIND_PORT(pGainOut);
+            SKIP_PORT("Zoom");   // Skip 'Zoom' control
+            BIND_PORT(pFftIn);
+            BIND_PORT(pFftOut);
+            BIND_PORT(pFftGen);
+            BIND_PORT(pReactivity);
+            BIND_PORT(pShiftGain);
 
             // Bind generator ports
             lsp_trace("Binding generator ports");
@@ -402,54 +392,54 @@ namespace lsp
             {
                 generator_t *g          = &vGenerators[i];
 
-                g->pNoiseType           = TRACE_PORT(ports[port_id++]);
-                g->pAmplitude           = TRACE_PORT(ports[port_id++]);
-                g->pOffset              = TRACE_PORT(ports[port_id++]);
-                g->pSlSw                = TRACE_PORT(ports[port_id++]);
-                g->pMtSw                = TRACE_PORT(ports[port_id++]);
-                g->pInaSw               = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(g->pNoiseType);
+                BIND_PORT(g->pAmplitude);
+                BIND_PORT(g->pOffset);
+                BIND_PORT(g->pSlSw);
+                BIND_PORT(g->pMtSw);
+                BIND_PORT(g->pInaSw);
 
-                g->pLCGdist             = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(g->pLCGdist);
 
-                g->pVelvetType          = TRACE_PORT(ports[port_id++]);
-                g->pVelvetWin           = TRACE_PORT(ports[port_id++]);
-                g->pVelvetARNd          = TRACE_PORT(ports[port_id++]);
-                g->pVelvetCSW           = TRACE_PORT(ports[port_id++]);
-                g->pVelvetCpr           = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(g->pVelvetType);
+                BIND_PORT(g->pVelvetWin);
+                BIND_PORT(g->pVelvetARNd);
+                BIND_PORT(g->pVelvetCSW);
+                BIND_PORT(g->pVelvetCpr);
 
-                g->pColorSel            = TRACE_PORT(ports[port_id++]);
-                g->pCslopeNPN           = TRACE_PORT(ports[port_id++]);
-                g->pCslopeDBO           = TRACE_PORT(ports[port_id++]);
-                g->pCslopeDBD           = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(g->pColorSel);
+                BIND_PORT(g->pCslopeNPN);
+                BIND_PORT(g->pCslopeDBO);
+                BIND_PORT(g->pCslopeDBD);
 
-                g->pFft                 = TRACE_PORT(ports[port_id++]);
-                g->pMeterOut            = TRACE_PORT(ports[port_id++]);
-                g->pMsh                 = TRACE_PORT(ports[port_id++]);
-                g->pSpectrum            = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(g->pFft);
+                BIND_PORT(g->pMeterOut);
+                BIND_PORT(g->pMsh);
+                BIND_PORT(g->pSpectrum);
             }
 
             // Bind channel control ports
             lsp_trace("Binding channel control ports");
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
 
                 if (nChannels > 1)
                 {
-                    c->pSlSw                = TRACE_PORT(ports[port_id++]);
-                    c->pMtSw                = TRACE_PORT(ports[port_id++]);
-                    c->pFftIn               = TRACE_PORT(ports[port_id++]);
-                    c->pFftOut              = TRACE_PORT(ports[port_id++]);
+                    BIND_PORT(c->pSlSw);
+                    BIND_PORT(c->pMtSw);
+                    BIND_PORT(c->pFftIn);
+                    BIND_PORT(c->pFftOut);
                 }
-                c->pNoiseMode 	        = TRACE_PORT(ports[port_id++]);
+                BIND_PORT(c->pNoiseMode);
                 for (size_t j=0; j<meta::noise_generator::NUM_GENERATORS; ++j)
-                    c->pGain[j]             = TRACE_PORT(ports[port_id++]);
-                c->pGainIn              = TRACE_PORT(ports[port_id++]);
-                c->pGainOut             = TRACE_PORT(ports[port_id++]);
-                c->pMeterIn             = TRACE_PORT(ports[port_id++]);
-                c->pMeterOut            = TRACE_PORT(ports[port_id++]);
-                c->pSpectrumIn          = TRACE_PORT(ports[port_id++]);
-                c->pSpectrumOut         = TRACE_PORT(ports[port_id++]);
+                    BIND_PORT(c->pGain[j]);
+                BIND_PORT(c->pGainIn);
+                BIND_PORT(c->pGainOut);
+                BIND_PORT(c->pMeterIn);
+                BIND_PORT(c->pMeterOut);
+                BIND_PORT(c->pSpectrumIn);
+                BIND_PORT(c->pSpectrumOut);
             }
 
             lsp_assert(ptr <= &guard[alloc]);
@@ -813,7 +803,7 @@ namespace lsp
             an_id   = 0;
             for (size_t i=0; i<meta::noise_generator_metadata::NUM_GENERATORS; ++i)
             {
-                generator_t *g      = &vGenerators[i];
+                generator_t * const g   = &vGenerators[i];
 
                 // Make a Frequency Chart - It only needs to be updated when the settings changed. so if bUpdPlots is true.
                 // We do the chart after processing so that we chart the most up to date filter state.
