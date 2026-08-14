@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Stefano Tronci <stefano.tronci@protonmail.com>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 27 Feb 2022
@@ -40,10 +41,6 @@ namespace lsp
          */
         class noise_generator: public plug::Module
         {
-            private:
-                noise_generator & operator = (const noise_generator &);
-                noise_generator (const noise_generator &);
-
             protected:
                 enum ch_update_t
                 {
@@ -134,7 +131,7 @@ namespace lsp
             protected:
                 generator_t                 vGenerators[meta::noise_generator::NUM_GENERATORS];
                 dspu::Analyzer              sAnalyzer;          // Spectrum analyzer
-                size_t                      nChannels;          // Number of channels
+                uint32_t                    nChannels;          // Number of channels
                 channel_t                  *vChannels;          // Noise Generator channels
                 float                      *vFreqs;             // Frequency list
                 uint32_t                   *vIndexes;           // Frequency indexes
@@ -166,7 +163,12 @@ namespace lsp
 
             public:
                 explicit noise_generator(const meta::plugin_t *meta);
+                noise_generator(const noise_generator &) = delete;
+                noise_generator(noise_generator &&) = delete;
                 virtual ~noise_generator() override;
+
+                noise_generator & operator = (const noise_generator &) = delete;
+                noise_generator & operator = (noise_generator &&) = delete;
 
                 virtual void        init(plug::IWrapper *wrapper, plug::IPort **ports) override;
                 void                destroy() override;
