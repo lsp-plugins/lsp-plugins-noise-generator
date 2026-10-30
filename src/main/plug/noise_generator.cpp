@@ -534,15 +534,9 @@ namespace lsp
             bool c_has_solo     = false;
 
             // Update spectrum analyzer settings
-            bool fft_in         = pFftIn->value()  >= 0.5f;
-            bool fft_out        = pFftOut->value() >= 0.5f;
-            bool fft_gen        = pFftGen->value() >= 0.5f;
-            bool fft_on         = fft_in || fft_out || fft_gen;
-            if (fft_on != sAnalyzer.activity())
-            {
-                sAnalyzer.reset();
-                sAnalyzer.set_activity(fft_on);
-            }
+            const bool fft_in   = pFftIn->value()  >= 0.5f;
+            const bool fft_out  = pFftOut->value() >= 0.5f;
+            const bool fft_gen  = pFftGen->value() >= 0.5f;
 
             // Update reactivity and shift gain
             sAnalyzer.set_reactivity(pReactivity->value());
@@ -867,6 +861,16 @@ namespace lsp
                     }
                 }
             }
+        }
+
+        void noise_generator::ui_activated()
+        {
+            sAnalyzer.set_activity(true);
+        }
+
+        void noise_generator::ui_deactivated()
+        {
+            sAnalyzer.set_activity(false);
         }
 
         bool noise_generator::inline_display(plug::ICanvas *cv, size_t width, size_t height)
