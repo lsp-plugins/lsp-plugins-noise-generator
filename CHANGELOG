@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.32 ===
+
+
 === 1.0.31 ===
 * Optimized CPU consumption: FFT analysis is not performed when UI is not active.
 * Updated build scripts and dependencies.
